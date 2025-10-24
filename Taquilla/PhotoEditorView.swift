@@ -27,6 +27,12 @@ struct PhotoEditorView: View {
   // Template states
   @State private var showingTemplatePicker = false
   @State private var weatherOverlay: WeatherOverlay?
+  
+  // Para calcular el factor de escala entre pantalla e imagen
+  @State private var displayedImageSize: CGSize = .zero
+  
+  // Para mostrar mensaje de éxito
+  @State private var showingSaveSuccess = false
 
   // Imagen con filtro aplicado
   private var displayImage: UIImage? {
@@ -37,14 +43,36 @@ struct PhotoEditorView: View {
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
-        // Logo y botón guardar en la parte superior
+        // Logo y botones en la parte superior
         HStack {
+          // Botón para descartar imagen (izquierda)
+          if selectedImage != nil {
+            Button(action: {
+              // Descartar imagen y limpiar todo
+              selectedImage = nil
+              textElements = []
+              curvedTextElements = []
+              weatherOverlay = nil
+              currentFilter = .none
+            }) {
+              Image(systemName: "xmark.circle.fill")
+                .font(.title2)
+                .foregroundColor(.white)
+                .padding(.leading, 16)
+            }
+          } else {
+            Spacer()
+              .frame(width: 56)
+          }
+          
           Spacer()
+          
           Image("Logo")
             .resizable()
             .scaledToFit()
             .frame(height: 30)
             .padding(.vertical, 8)
+          
           Spacer()
           
           // Botón guardar en la esquina superior derecha
@@ -52,18 +80,32 @@ struct PhotoEditorView: View {
             Button(action: { saveImage() }) {
               Image(systemName: "square.and.arrow.down")
                 .font(.title2)
-                .foregroundColor(.green)
+                .foregroundColor(.white)
                 .padding(.trailing, 16)
             }
+          } else {
+            Spacer()
+              .frame(width: 56)
           }
         }
         .background(Color(.systemBackground))
 
         ZStack {
           if let image = displayImage {
-            Image(uiImage: image)
-              .resizable()
-              .aspectRatio(contentMode: .fit)
+            GeometryReader { geometry in
+              Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .background(
+                  GeometryReader { imageGeometry in
+                    Color.clear.onAppear {
+                      displayedImageSize = imageGeometry.size
+                    }
+                    .onChange(of: imageGeometry.size) { oldValue, newValue in
+                      displayedImageSize = newValue
+                    }
+                  }
+                )
               .overlay(
                 ZStack {
                   // Textos rectos normales
@@ -166,6 +208,7 @@ struct PhotoEditorView: View {
                   }
                 }
               )
+            }
           } else {
             VStack {
               Image(systemName: "photo")
@@ -188,7 +231,7 @@ struct PhotoEditorView: View {
                 Text("Foto")
                   .font(.caption)
               }
-              .foregroundColor(.blue)
+              .foregroundColor(.white)
             }
 
             if selectedImage != nil {
@@ -199,7 +242,7 @@ struct PhotoEditorView: View {
                   Text("Texto")
                     .font(.caption)
                 }
-                .foregroundColor(.purple)
+                .foregroundColor(.white)
               }
 
               Button(action: {
@@ -213,7 +256,7 @@ struct PhotoEditorView: View {
                   Text("Curvo")
                     .font(.caption)
                 }
-                .foregroundColor(isDrawingMode ? .orange : .purple)
+                .foregroundColor(.white)
               }
 
               Button(action: { showingFilterPicker.toggle() }) {
@@ -223,7 +266,7 @@ struct PhotoEditorView: View {
                   Text("Filtros")
                     .font(.caption)
                 }
-                .foregroundColor(showingFilterPicker ? .orange : .blue)
+                .foregroundColor(.white)
               }
               
               Button(action: { showingTemplatePicker.toggle() }) {
@@ -233,7 +276,7 @@ struct PhotoEditorView: View {
                   Text("Plantillas")
                     .font(.caption)
                 }
-                .foregroundColor(showingTemplatePicker ? .orange : .blue)
+                .foregroundColor(.white)
               }
             }
           }
@@ -399,6 +442,29 @@ struct PhotoEditorView: View {
           }
         )
       }
+      .overlay(
+        Group {
+          if showingSaveSuccess {
+            VStack {
+              Spacer()
+              HStack {
+                Image(systemName: "checkmark.circle.fill")
+                  .foregroundColor(.green)
+                  .font(.title2)
+                Text("Imagen guardada exitosamente")
+                  .foregroundColor(.white)
+                  .fontWeight(.semibold)
+              }
+              .padding()
+              .background(Color.black.opacity(0.8))
+              .cornerRadius(12)
+              .padding(.bottom, 50)
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(), value: showingSaveSuccess)
+          }
+        }
+      )
     }
   }
 
@@ -406,16 +472,34 @@ struct PhotoEditorView: View {
     guard let image = displayImage else { return }
     let finalImage = createImageWithTexts(from: image)
     UIImageWriteToSavedPhotosAlbum(finalImage, nil, nil, nil)
+    
+    // Mostrar mensaje de éxito
+    withAnimation {
+      showingSaveSuccess = true
+    }
+    
+    // Ocultar mensaje después de 2 segundos
+    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+      withAnimation {
+        showingSaveSuccess = false
+      }
+    }
   }
 
   func createImageWithTexts(from image: UIImage) -> UIImage {
     let renderer = UIGraphicsImageRenderer(size: image.size)
     return renderer.image { context in
       image.draw(at: .zero)
+      
+      // Calcular el factor de escala entre la imagen mostrada y la imagen real
+      let scaleX = image.size.width / displayedImageSize.width
+      let scaleY = image.size.height / displayedImageSize.height
+      let scale = max(scaleX, scaleY) // Usar el mayor para mantener proporciones
 
       // Dibujar textos rectos
       for textElement in textElements {
-        let scaledFontSize = textElement.fontSize * textElement.scale
+        // Aplicar escala al tamaño de fuente
+        let scaledFontSize = textElement.fontSize * textElement.scale * scale
         
         // Usar fuente personalizada si está disponible, sino fuente del sistema
         let font: UIFont
@@ -427,7 +511,7 @@ struct PhotoEditorView: View {
           font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
         }
         
-        // Calcular tamaño y posición del texto
+        // Calcular tamaño y posición del texto con escala
         let baseAttributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(textElement.color),
@@ -435,12 +519,18 @@ struct PhotoEditorView: View {
         let attributedString = NSAttributedString(string: textElement.text, attributes: baseAttributes)
         let textSize = attributedString.size()
         
-        // Calcular el área con padding
-        let paddingH: CGFloat = 12
-        let paddingV: CGFloat = 6
+        // Aplicar escala a las posiciones y padding
+        let scaledPosition = CGPoint(
+          x: textElement.position.x * scale,
+          y: textElement.position.y * scale
+        )
+        
+        // Calcular el área con padding escalado
+        let paddingH: CGFloat = 12 * scale
+        let paddingV: CGFloat = 6 * scale
         let backgroundRect = CGRect(
-          x: textElement.position.x - (textSize.width + paddingH * 2) / 2,
-          y: textElement.position.y - (textSize.height + paddingV * 2) / 2,
+          x: scaledPosition.x - (textSize.width + paddingH * 2) / 2,
+          y: scaledPosition.y - (textSize.height + paddingV * 2) / 2,
           width: textSize.width + paddingH * 2,
           height: textSize.height + paddingV * 2
         )
@@ -461,8 +551,8 @@ struct PhotoEditorView: View {
         }
         
         let textRect = CGRect(
-          x: textElement.position.x - textSize.width / 2,
-          y: textElement.position.y - textSize.height / 2,
+          x: scaledPosition.x - textSize.width / 2,
+          y: scaledPosition.y - textSize.height / 2,
           width: textSize.width,
           height: textSize.height
         )
@@ -475,13 +565,14 @@ struct PhotoEditorView: View {
             .foregroundColor: UIColor(shadow.color),
           ]
           let shadowString = NSAttributedString(string: textElement.text, attributes: shadowAttributes)
-          let shadowRect = textRect.offsetBy(dx: shadow.x, dy: shadow.y)
+          // Escalar el offset de la sombra
+          let shadowRect = textRect.offsetBy(dx: shadow.x * scale, dy: shadow.y * scale)
           
-          // Simular blur usando múltiples capas con opacidad reducida
-          let blurSteps = Int(shadow.radius / 2)
+          // Simular blur usando múltiples capas con opacidad reducida (escalado)
+          let blurSteps = Int((shadow.radius * scale) / 2)
           for i in 0...max(1, blurSteps) {
             context.cgContext.setAlpha(0.3 / CGFloat(max(1, blurSteps)))
-            let offset = CGFloat(i) * 0.5
+            let offset = CGFloat(i) * 0.5 * scale
             shadowString.draw(in: shadowRect.offsetBy(dx: offset, dy: 0))
             shadowString.draw(in: shadowRect.offsetBy(dx: -offset, dy: 0))
             shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: offset))
@@ -496,18 +587,25 @@ struct PhotoEditorView: View {
 
       // Dibujar textos curvos
       for curvedText in curvedTextElements {
-        drawCurvedText(curvedText, in: context.cgContext)
+        drawCurvedText(curvedText, in: context.cgContext, scale: scale)
+      }
+      
+      // Dibujar weather overlay
+      if let weather = weatherOverlay {
+        drawWeatherOverlay(weather, in: context.cgContext, imageSize: image.size, scale: scale)
       }
     }
   }
 
-  func drawCurvedText(_ curvedText: CurvedTextElement, in context: CGContext) {
-    let pathLength = PathUtilities.pathLength(curvedText.path)
+  func drawCurvedText(_ curvedText: CurvedTextElement, in context: CGContext, scale: CGFloat) {
+    // Escalar el path
+    let scaledPath = curvedText.path.map { CGPoint(x: $0.x * scale, y: $0.y * scale) }
+    let pathLength = PathUtilities.pathLength(scaledPath)
     guard pathLength > 0 else { return }
 
     let uiFontWeight = convertToUIFontWeight(curvedText.fontWeight)
-    // Aplicar la escala al fontSize
-    let scaledFontSize = curvedText.fontSize * curvedText.scale
+    // Aplicar la escala al fontSize y al scale del elemento
+    let scaledFontSize = curvedText.fontSize * curvedText.scale * scale
     let font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
     let characters = Array(curvedText.text)
     let textCount = CGFloat(characters.count)
@@ -518,13 +616,13 @@ struct PhotoEditorView: View {
 
     context.saveGState()
 
-    // Aplicar el offset (traslación)
-    context.translateBy(x: curvedText.offset.width, y: curvedText.offset.height)
+    // Aplicar el offset escalado
+    context.translateBy(x: curvedText.offset.width * scale, y: curvedText.offset.height * scale)
 
     for (index, character) in characters.enumerated() {
       let distance = spacing * CGFloat(index) + (spacing / 2)
 
-      if let positionInfo = PathUtilities.pointAtDistance(curvedText.path, distance: distance) {
+      if let positionInfo = PathUtilities.pointAtDistance(scaledPath, distance: distance) {
         let attributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(curvedText.color),
@@ -597,6 +695,93 @@ struct PhotoEditorView: View {
     }
 
     return optimalSize
+  }
+  
+  func drawWeatherOverlay(_ weather: WeatherOverlay, in context: CGContext, imageSize: CGSize, scale: CGFloat) {
+    context.saveGState()
+    
+    // Configuración de posicionamiento: esquina inferior derecha con padding escalado
+    let padding: CGFloat = 20 * scale
+    
+    // Cargar la imagen del clima (SVG convertido a UIImage)
+    guard let weatherImage = UIImage(named: weather.weatherType.imageName) else { return }
+    let iconSize: CGFloat = 48 * scale
+    
+    // Fuentes con tamaños escalados
+    guard let tempFont = UIFont(name: "Ari-W9500Display", size: 40 * scale) else { return }
+    guard let locationFont = UIFont(name: "Ari-W9500Display", size: 12 * scale) else { return }
+    
+    // Atributos de texto
+    let tempAttributes: [NSAttributedString.Key: Any] = [
+      .font: tempFont,
+      .foregroundColor: UIColor.white
+    ]
+    
+    let locationAttributes: [NSAttributedString.Key: Any] = [
+      .font: locationFont,
+      .foregroundColor: UIColor.white
+    ]
+    
+    // Calcular tamaños
+    let tempString = weather.temperature as NSString
+    let tempSize = tempString.size(withAttributes: tempAttributes)
+    
+    let locationString = weather.location.uppercased() as NSString
+    let locationSize = locationString.size(withAttributes: locationAttributes)
+    
+    // Calcular el ancho total del HStack (icono + spacing + temperatura) - con spacing escalado
+    let hStackSpacing: CGFloat = 12 * scale
+    let hStackWidth = iconSize + hStackSpacing + tempSize.width
+    
+    // Calcular el ancho máximo (para centrar la ubicación)
+    let maxWidth = max(hStackWidth, locationSize.width)
+    
+    // Calcular la altura total - con spacing escalado
+    let vStackSpacing: CGFloat = 8 * scale
+    let totalHeight = iconSize + vStackSpacing + locationSize.height
+    
+    // Posición inicial (esquina inferior derecha)
+    let baseX = imageSize.width - maxWidth - padding
+    let baseY = imageSize.height - totalHeight - padding
+    
+    // Dibujar el icono del clima
+    let iconRect = CGRect(
+      x: baseX + (maxWidth - hStackWidth) / 2,  // Centrar el HStack
+      y: baseY,
+      width: iconSize,
+      height: iconSize
+    )
+    weatherImage.draw(in: iconRect)
+    
+    // Dibujar la temperatura (al lado derecho del icono)
+    let tempRect = CGRect(
+      x: iconRect.maxX + hStackSpacing,
+      y: baseY + (iconSize - tempSize.height) / 2,  // Centrar verticalmente con el icono
+      width: tempSize.width,
+      height: tempSize.height
+    )
+    
+    // Dibujar sombra para la temperatura (escalada)
+    context.saveGState()
+    context.setShadow(offset: CGSize(width: 0, height: 4 * scale), blur: 8 * scale, color: UIColor.black.withAlphaComponent(0.5).cgColor)
+    tempString.draw(in: tempRect, withAttributes: tempAttributes)
+    context.restoreGState()
+    
+    // Dibujar la ubicación (centrada debajo)
+    let locationRect = CGRect(
+      x: baseX + (maxWidth - locationSize.width) / 2,  // Centrar la ubicación
+      y: baseY + iconSize + vStackSpacing,
+      width: locationSize.width,
+      height: locationSize.height
+    )
+    
+    // Dibujar sombra para la ubicación (escalada)
+    context.saveGState()
+    context.setShadow(offset: CGSize(width: 0, height: 4 * scale), blur: 8 * scale, color: UIColor.black.withAlphaComponent(0.5).cgColor)
+    locationString.draw(in: locationRect, withAttributes: locationAttributes)
+    context.restoreGState()
+    
+    context.restoreGState()
   }
   
   func loadWeatherData() async {

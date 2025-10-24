@@ -75,14 +75,24 @@ struct PhotoEditorView: View {
           
           Spacer()
           
-          // Botón guardar en la esquina superior derecha
+          // Botones de compartir y guardar en la esquina superior derecha
           if selectedImage != nil {
-            Button(action: { saveImage() }) {
-              Image(systemName: "square.and.arrow.down")
-                .font(.title2)
-                .foregroundColor(.white)
-                .padding(.trailing, 16)
+            HStack(spacing: 12) {
+              // Botón de compartir
+              Button(action: { shareToInstagramStory() }) {
+                Image(systemName: "square.and.arrow.up")
+                  .font(.title2)
+                  .foregroundColor(.white)
+              }
+              
+              // Botón guardar
+              Button(action: { saveImage() }) {
+                Image(systemName: "square.and.arrow.down")
+                  .font(.title2)
+                  .foregroundColor(.white)
+              }
             }
+            .padding(.trailing, 16)
           } else {
             Spacer()
               .frame(width: 56)
@@ -485,16 +495,78 @@ struct PhotoEditorView: View {
       }
     }
   }
+  
+  func shareToInstagramStory() {
+    guard let image = displayImage else { return }
+    
+    // Crear la imagen final en un contexto válido
+    let finalImage = createImageWithTexts(from: image)
+    
+    // Optimizar la imagen para compartir (JPEG con compresión)
+    let optimizedImage = optimizeImageForSharing(finalImage)
+    
+    // Crear el activity view controller para compartir
+    let activityViewController = UIActivityViewController(
+      activityItems: [optimizedImage],
+      applicationActivities: nil
+    )
+    
+    // Excluir algunas actividades que no tienen sentido para una imagen
+    activityViewController.excludedActivityTypes = [
+      .addToReadingList,
+      .assignToContact,
+      .openInIBooks,
+      .markupAsPDF
+    ]
+    
+    // Configurar para iPad (necesario para evitar crashes en iPad)
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+       let rootViewController = windowScene.windows.first?.rootViewController {
+      
+      // Para iPad, necesitamos configurar el popover
+      if let popoverController = activityViewController.popoverPresentationController {
+        popoverController.sourceView = rootViewController.view
+        popoverController.sourceRect = CGRect(
+          x: rootViewController.view.bounds.midX,
+          y: rootViewController.view.bounds.midY,
+          width: 0,
+          height: 0
+        )
+        popoverController.permittedArrowDirections = []
+      }
+      
+      rootViewController.present(activityViewController, animated: true)
+    }
+  }
 
   func createImageWithTexts(from image: UIImage) -> UIImage {
-    let renderer = UIGraphicsImageRenderer(size: image.size)
+    // Limitar el tamaño máximo de la imagen para evitar problemas de memoria
+    let maxSize: CGFloat = 2048
+    var targetSize = image.size
+    
+    if image.size.width > maxSize || image.size.height > maxSize {
+      let aspectRatio = image.size.width / image.size.height
+      if image.size.width > image.size.height {
+        targetSize = CGSize(width: maxSize, height: maxSize / aspectRatio)
+      } else {
+        targetSize = CGSize(width: maxSize * aspectRatio, height: maxSize)
+      }
+    }
+    
+    let renderer = UIGraphicsImageRenderer(size: targetSize)
     return renderer.image { context in
-      image.draw(at: .zero)
+      // Dibujar la imagen base redimensionada
+      image.draw(in: CGRect(origin: .zero, size: targetSize))
       
-      // Calcular el factor de escala entre la imagen mostrada y la imagen real
-      let scaleX = image.size.width / displayedImageSize.width
-      let scaleY = image.size.height / displayedImageSize.height
-      let scale = max(scaleX, scaleY) // Usar el mayor para mantener proporciones
+      // Calcular el factor de escala entre la imagen mostrada y la imagen final
+      // Usar un valor por defecto si displayedImageSize es inválido
+      let validDisplaySize = displayedImageSize.width > 0 && displayedImageSize.height > 0 
+        ? displayedImageSize 
+        : CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height * 0.6)
+      
+      let scaleX = targetSize.width / validDisplaySize.width
+      let scaleY = targetSize.height / validDisplaySize.height
+      let scale = min(scaleX, scaleY) // Usar el menor para mantener todo visible
 
       // Dibujar textos rectos
       for textElement in textElements {
@@ -568,15 +640,21 @@ struct PhotoEditorView: View {
           // Escalar el offset de la sombra
           let shadowRect = textRect.offsetBy(dx: shadow.x * scale, dy: shadow.y * scale)
           
-          // Simular blur usando múltiples capas con opacidad reducida (escalado)
-          let blurSteps = Int((shadow.radius * scale) / 2)
-          for i in 0...max(1, blurSteps) {
-            context.cgContext.setAlpha(0.3 / CGFloat(max(1, blurSteps)))
-            let offset = CGFloat(i) * 0.5 * scale
-            shadowString.draw(in: shadowRect.offsetBy(dx: offset, dy: 0))
-            shadowString.draw(in: shadowRect.offsetBy(dx: -offset, dy: 0))
-            shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: offset))
-            shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: -offset))
+          // Simular blur usando capas limitadas (optimizado para memoria)
+          let blurSteps = min(3, Int((shadow.radius * scale) / 2)) // Máximo 3 pasos
+          if blurSteps > 0 {
+            for i in 0...blurSteps {
+              context.cgContext.setAlpha(0.3 / CGFloat(max(1, blurSteps)))
+              let offset = CGFloat(i) * 0.5 * scale
+              shadowString.draw(in: shadowRect.offsetBy(dx: offset, dy: 0))
+              shadowString.draw(in: shadowRect.offsetBy(dx: -offset, dy: 0))
+              shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: offset))
+              shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: -offset))
+            }
+          } else {
+            // Si no hay blur, solo dibujar una vez
+            context.cgContext.setAlpha(1.0)
+            shadowString.draw(in: shadowRect)
           }
         }
         context.cgContext.restoreGState()
@@ -592,9 +670,39 @@ struct PhotoEditorView: View {
       
       // Dibujar weather overlay
       if let weather = weatherOverlay {
-        drawWeatherOverlay(weather, in: context.cgContext, imageSize: image.size, scale: scale)
+        drawWeatherOverlay(weather, in: context.cgContext, imageSize: targetSize, scale: scale)
       }
     }
+  }
+  
+  func optimizeImageForSharing(_ image: UIImage) -> UIImage {
+    // Tamaño óptimo para redes sociales (Instagram, WhatsApp, etc.)
+    let maxSize: CGFloat = 1920
+    var targetSize = image.size
+    
+    // Redimensionar si es necesario
+    if image.size.width > maxSize || image.size.height > maxSize {
+      let aspectRatio = image.size.width / image.size.height
+      if image.size.width > image.size.height {
+        targetSize = CGSize(width: maxSize, height: maxSize / aspectRatio)
+      } else {
+        targetSize = CGSize(width: maxSize * aspectRatio, height: maxSize)
+      }
+    }
+    
+    // Redimensionar la imagen si es necesario
+    let renderer = UIGraphicsImageRenderer(size: targetSize, format: UIGraphicsImageRendererFormat())
+    let resizedImage = renderer.image { context in
+      image.draw(in: CGRect(origin: .zero, size: targetSize))
+    }
+    
+    // Convertir a JPEG con compresión de calidad 0.85 (balance entre calidad y tamaño)
+    guard let jpegData = resizedImage.jpegData(compressionQuality: 0.85),
+          let optimizedImage = UIImage(data: jpegData) else {
+      return image // Si falla, devolver la imagen original
+    }
+    
+    return optimizedImage
   }
 
   func drawCurvedText(_ curvedText: CurvedTextElement, in context: CGContext, scale: CGFloat) {

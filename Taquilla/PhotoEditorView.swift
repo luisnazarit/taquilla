@@ -24,27 +24,26 @@ struct PhotoEditorView: View {
                             .aspectRatio(contentMode: .fit)
                             .overlay(
                                 ForEach(textElements) { textElement in
-                                    Text(textElement.text)
-                                        .font(.system(size: textElement.fontSize, weight: textElement.fontWeight))
-                                        .foregroundColor(textElement.color)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.black.opacity(0.3))
-                                        .cornerRadius(8)
-                                        .position(textElement.position)
-                                        .gesture(
-                                            DragGesture()
-                                                .onChanged { value in
-                                                    if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
-                                                        textElements[index].position = value.location
-                                                    }
-                                                }
-                                        )
-                                        .onTapGesture {
+                                    TextElementView(
+                                        textElement: textElement,
+                                        onDrag: { translation in
+                                            if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
+                                                textElements[index].position.x += translation.width
+                                                textElements[index].position.y += translation.height
+                                            }
+                                        },
+                                        onScale: { scale in
+                                            if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
+                                                let newScale = textElement.scale * scale
+                                                textElements[index].scale = min(max(newScale, 0.3), 4.0)
+                                            }
+                                        },
+                                        onTap: {
                                             selectedTextElement = textElement
                                             editingText = textElement.text
                                             showingTextEditor = true
                                         }
+                                    )
                                 }
                             )
                     } else {
@@ -188,8 +187,9 @@ struct PhotoEditorView: View {
             
             for textElement in textElements {
                 let uiFontWeight = convertToUIFontWeight(textElement.fontWeight)
+                let scaledFontSize = textElement.fontSize * textElement.scale
                 let attributes: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: textElement.fontSize, weight: uiFontWeight),
+                    .font: UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight),
                     .foregroundColor: UIColor(textElement.color)
                 ]
                 
@@ -222,6 +222,75 @@ struct PhotoEditorView: View {
     }
 }
 
+struct TextElementView: View {
+    let textElement: TextElement
+    let onDrag: (CGSize) -> Void
+    let onScale: (CGFloat) -> Void
+    let onTap: () -> Void
+    
+    @State private var lastDragPosition: CGSize = .zero
+    @State private var currentMagnification: CGFloat = 1.0
+    
+    // Área de toque mínima que se mantiene incluso cuando el texto es pequeño
+    private var minimumTouchArea: CGFloat {
+        // Cuando el texto es pequeño (scale < 1.0), el área es más grande
+        if textElement.scale < 1.0 {
+            return 100 // Área grande para facilitar el agarre
+        } else {
+            return max(40, 30 * textElement.scale)
+        }
+    }
+    
+    var body: some View {
+        Text(textElement.text)
+            .font(.system(size: textElement.fontSize, weight: textElement.fontWeight))
+            .foregroundColor(textElement.color)
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(8)
+            .padding(minimumTouchArea)
+            .contentShape(Rectangle())
+            .scaleEffect(textElement.scale)
+            .position(textElement.position)
+            .gesture(
+                SimultaneousGesture(
+                    DragGesture()
+                        .onChanged { value in
+                            let translation = CGSize(
+                                width: value.translation.width - lastDragPosition.width,
+                                height: value.translation.height - lastDragPosition.height
+                            )
+                            lastDragPosition = value.translation
+                            onDrag(translation)
+                        }
+                        .onEnded { _ in
+                            lastDragPosition = .zero
+                        },
+                    MagnificationGesture()
+                        .onChanged { value in
+                            // Sensibilidad muy reducida para cambios suaves y graduales
+                            let sensitivity: CGFloat = 0.2
+                            let delta = (value - currentMagnification) * sensitivity
+                            currentMagnification = value
+                            
+                            // Aplicar el cambio incremental
+                            let newScale = textElement.scale + delta
+                            onScale(newScale / textElement.scale)
+                        }
+                        .onEnded { _ in
+                            currentMagnification = 1.0
+                        }
+                )
+            )
+            .onTapGesture {
+                onTap()
+            }
+    }
+}
+
 struct FontStyle {
     let name: String
     let size: CGFloat
@@ -236,9 +305,15 @@ struct TextInputView: View {
     let onCancel: () -> Void
     @FocusState private var isFocused: Bool
     
+    private let maxCharacters = 100
+    
+    var remainingCharacters: Int {
+        maxCharacters - text.count
+    }
+    
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 16) {
                 Spacer()
                 
                 TextField("Escribe tu texto aquí", text: $text)
@@ -247,6 +322,16 @@ struct TextInputView: View {
                     .multilineTextAlignment(.center)
                     .padding()
                     .focused($isFocused)
+                    .onChange(of: text) { oldValue, newValue in
+                        if newValue.count > maxCharacters {
+                            text = String(newValue.prefix(maxCharacters))
+                        }
+                    }
+                
+                Text("\(remainingCharacters) caracteres restantes")
+                    .font(.caption)
+                    .foregroundColor(remainingCharacters < 20 ? .red : .white.opacity(0.7))
+                    .padding(.bottom, 8)
                 
                 Spacer()
             }

@@ -9,6 +9,7 @@ struct TextElement: Identifiable {
     var fontSize: CGFloat
     var fontWeight: Font.Weight
     var color: Color
+    var scale: CGFloat = 1.0
 }
 
 // MARK: - Photo Filter Enum

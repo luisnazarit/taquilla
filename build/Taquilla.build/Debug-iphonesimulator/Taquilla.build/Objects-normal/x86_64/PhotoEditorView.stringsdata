@@ -7,7 +7,7 @@
         "key": "Editor de Fotos",
         "location": {
           "startingColumn": 30,
-          "startingLine": 129
+          "startingLine": 128
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Selecciona una foto para editar",
         "location": {
           "startingColumn": 34,
-          "startingLine": 55
+          "startingLine": 54
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Foto",
         "location": {
           "startingColumn": 38,
-          "startingLine": 69
+          "startingLine": 68
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Agregar Texto",
         "location": {
           "startingColumn": 42,
-          "startingLine": 80
+          "startingLine": 79
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Filtros",
         "location": {
           "startingColumn": 38,
-          "startingLine": 91
+          "startingLine": 90
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Guardar",
         "location": {
           "startingColumn": 42,
-          "startingLine": 102
+          "startingLine": 101
         }
       },
       {
@@ -55,7 +55,15 @@
         "key": "Agregar Texto",
         "location": {
           "startingColumn": 30,
-          "startingLine": 255
+          "startingLine": 340
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld caracteres restantes",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 331
         }
       },
       {
@@ -63,7 +71,7 @@
         "key": "Escribe tu texto aquí",
         "location": {
           "startingColumn": 27,
-          "startingLine": 244
+          "startingLine": 319
         }
       },
       {
@@ -71,7 +79,7 @@
         "key": "Cancelar",
         "location": {
           "startingColumn": 28,
-          "startingLine": 259
+          "startingLine": 344
         }
       },
       {
@@ -79,7 +87,7 @@
         "key": "Listo",
         "location": {
           "startingColumn": 28,
-          "startingLine": 265
+          "startingLine": 350
         }
       },
       {
@@ -87,7 +95,7 @@
         "key": "Tipos de Letra",
         "location": {
           "startingColumn": 30,
-          "startingLine": 335
+          "startingLine": 420
         }
       },
       {
@@ -95,7 +103,7 @@
         "key": "Elige un estilo de texto",
         "location": {
           "startingColumn": 22,
-          "startingLine": 303
+          "startingLine": 388
         }
       },
       {
@@ -103,7 +111,7 @@
         "key": "Aa",
         "location": {
           "startingColumn": 38,
-          "startingLine": 314
+          "startingLine": 399
         }
       },
       {
@@ -111,7 +119,7 @@
         "key": "Cerrar",
         "location": {
           "startingColumn": 28,
-          "startingLine": 339
+          "startingLine": 424
         }
       }
     ]

@@ -52,11 +52,11 @@ struct PhotoEditorView: View {
                             .overlay(
                                 ZStack {
                                     // Textos rectos normales
-                                    ForEach(textElements) { textElement in
+                                ForEach(textElements) { textElement in
                                         TextElementView(
                                             textElement: textElement,
                                             onDrag: { translation in
-                                                if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
+                                                    if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
                                                     textElements[index].position.x += translation.width
                                                     textElements[index].position.y += translation.height
                                                 }
@@ -94,8 +94,8 @@ struct PhotoEditorView: View {
                                             }
                                         )
                                     }
-                                }
-                            )
+                                        }
+                                )
                     } else {
                         VStack {
                             Image(systemName: "photo")
@@ -147,25 +147,25 @@ struct PhotoEditorView: View {
                             }
                             
                             Button(action: { showingFilterPicker.toggle() }) {
-                                VStack {
-                                    Image(systemName: "slider.horizontal.3")
-                                        .font(.title2)
-                                    Text("Filtros")
-                                        .font(.caption)
-                                }
+                            VStack {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.title2)
+                                Text("Filtros")
+                                    .font(.caption)
+                            }
                                 .foregroundColor(showingFilterPicker ? .orange : .blue)
                             }
                         }
                         
                         if selectedImage != nil {
-                            Button(action: { saveImage() }) {
-                                VStack {
-                                    Image(systemName: "square.and.arrow.down")
-                                        .font(.title2)
-                                    Text("Guardar")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(.green)
+                        Button(action: { saveImage() }) {
+                            VStack {
+                                Image(systemName: "square.and.arrow.down")
+                                    .font(.title2)
+                                Text("Guardar")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.green)
                             }
                         }
                     }
@@ -240,10 +240,17 @@ struct PhotoEditorView: View {
                     path: currentDrawnPath,
                     onDone: {
                         if !editingCurvedText.isEmpty && !currentDrawnPath.isEmpty {
+                            // Calcular el tamaño de fuente óptimo basado en la longitud de la línea
+                            let pathLength = PathUtilities.pathLength(currentDrawnPath)
+                            let optimalFontSize = calculateOptimalFontSize(
+                                for: editingCurvedText,
+                                pathLength: pathLength
+                            )
+                            
                             let newCurvedText = CurvedTextElement(
                                 text: editingCurvedText,
                                 path: currentDrawnPath,
-                                fontSize: 24,
+                                fontSize: optimalFontSize,
                                 fontWeight: .semibold,
                                 color: .white
                             )
@@ -311,14 +318,17 @@ struct PhotoEditorView: View {
         
         let uiFontWeight = convertToUIFontWeight(curvedText.fontWeight)
         let font = UIFont.systemFont(ofSize: curvedText.fontSize, weight: uiFontWeight)
-        let characterWidth = curvedText.fontSize * 0.6
-        let totalTextWidth = characterWidth * CGFloat(curvedText.text.count)
-        let startOffset = (pathLength - totalTextWidth) / 2
+        let characters = Array(curvedText.text)
+        let textCount = CGFloat(characters.count)
+        guard textCount > 0 else { return }
+        
+        // Distribuir las letras uniformemente a lo largo del path
+        let spacing = pathLength / textCount
         
         context.saveGState()
         
-        for (index, character) in curvedText.text.enumerated() {
-            let distance = startOffset + (characterWidth * CGFloat(index))
+        for (index, character) in characters.enumerated() {
+            let distance = spacing * CGFloat(index) + (spacing / 2)
             
             if let positionInfo = PathUtilities.pointAtDistance(curvedText.path, distance: distance) {
                 let attributes: [NSAttributedString.Key: Any] = [
@@ -331,6 +341,7 @@ struct PhotoEditorView: View {
                 
                 context.saveGState()
                 context.translateBy(x: positionInfo.point.x, y: positionInfo.point.y)
+                // Usar el ángulo de la tangente directamente
                 context.rotate(by: positionInfo.angle)
                 context.translateBy(x: -charSize.width / 2, y: -charSize.height / 2)
                 
@@ -356,6 +367,42 @@ struct PhotoEditorView: View {
         case .black: return .black
         default: return .regular
         }
+    }
+    
+    func calculateOptimalFontSize(for text: String, pathLength: CGFloat) -> CGFloat {
+        // Rango de tamaños de fuente a probar
+        let minFontSize: CGFloat = 12
+        let maxFontSize: CGFloat = 60
+        
+        // Usar búsqueda binaria para encontrar el tamaño óptimo
+        var low = minFontSize
+        var high = maxFontSize
+        var optimalSize = minFontSize
+        
+        while low <= high {
+            let mid = (low + high) / 2
+            let font = UIFont.systemFont(ofSize: mid, weight: .semibold)
+            
+            // Calcular el ancho total del texto con este tamaño
+            var totalWidth: CGFloat = 0
+            for char in text {
+                let charString = String(char) as NSString
+                let attributes: [NSAttributedString.Key: Any] = [.font: font]
+                totalWidth += charString.size(withAttributes: attributes).width
+            }
+            
+            // Dejar un 10% de margen
+            let requiredLength = totalWidth * 1.1
+            
+            if requiredLength <= pathLength {
+                optimalSize = mid
+                low = mid + 1
+            } else {
+                high = mid - 1
+            }
+        }
+        
+        return optimalSize
     }
 }
 
@@ -575,14 +622,56 @@ struct CurvedTextView: View {
     
     var body: some View {
         ZStack {
+            // DEBUG: Mostrar la línea siempre
+            Path { path in
+                guard curvedText.path.count > 0 else { return }
+                path.move(to: curvedText.path[0])
+                for point in curvedText.path.dropFirst() {
+                    path.addLine(to: point)
+                }
+            }
+            .stroke(Color.red.opacity(0.7), lineWidth: 3)
+            
+            // DEBUG: Mostrar todos los puntos del path
+            ForEach(Array(curvedText.path.enumerated()), id: \.offset) { index, point in
+                Circle()
+                    .fill(Color.blue.opacity(0.3))
+                    .frame(width: 4, height: 4)
+                    .position(point)
+            }
+            
+            // Puntos de inicio y fin
+            if let first = curvedText.path.first {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 10, height: 10)
+                    .position(first)
+            }
+            
+            if let last = curvedText.path.last {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 10, height: 10)
+                    .position(last)
+            }
+            
             // Renderizar cada letra siguiendo el path
             ForEach(Array(curvedText.text.enumerated()), id: \.offset) { index, character in
-                if let position = calculateLetterPosition(for: index) {
-                    Text(String(character))
-                        .font(.system(size: curvedText.fontSize, weight: curvedText.fontWeight))
-                        .foregroundColor(curvedText.color)
-                        .position(position.point)
-                        .rotationEffect(Angle(radians: Double(position.angle)))
+                if let letterInfo = calculateLetterPosition(for: index) {
+                    ZStack {
+                        // DEBUG: Mostrar punto donde va cada letra
+                        Circle()
+                            .fill(Color.yellow)
+                            .frame(width: 6, height: 6)
+                            .position(letterInfo.point)
+                        
+                        // Usar el ángulo de la tangente directamente para que las letras estén "de pie"
+                        Text(String(character))
+                            .font(.system(size: curvedText.fontSize, weight: curvedText.fontWeight))
+                            .foregroundColor(curvedText.color)
+                            .rotationEffect(Angle(radians: Double(letterInfo.angle)), anchor: .center)
+                            .position(letterInfo.point)
+                    }
                 }
             }
         }
@@ -596,17 +685,66 @@ struct CurvedTextView: View {
         let pathLength = PathUtilities.pathLength(curvedText.path)
         guard pathLength > 0 else { return nil }
         
-        // Estimar el ancho de cada carácter
-        let characterWidth = curvedText.fontSize * 0.6
+        let textCount = CGFloat(curvedText.text.count)
+        guard textCount > 0 else { return nil }
         
-        // Calcular el offset para centrar el texto en el path
-        let totalTextWidth = characterWidth * CGFloat(curvedText.text.count)
-        let startOffset = (pathLength - totalTextWidth) / 2
+        // Calcular ancho real del texto para usarlo como base
+        let font = UIFont.systemFont(ofSize: curvedText.fontSize, weight: convertToUIFontWeight(curvedText.fontWeight))
+        let fullText = curvedText.text as NSString
+        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let textWidth = fullText.size(withAttributes: attributes).width
         
-        // Posición de esta letra en el path
-        let distance = startOffset + (characterWidth * CGFloat(index))
+        // Si el texto cabe en el path, usar su ancho real
+        // Si no, distribuir uniformemente
+        let useRealWidth = textWidth < pathLength * 0.9
         
-        return PathUtilities.pointAtDistance(curvedText.path, distance: distance)
+        if useRealWidth {
+            // Usar anchos reales
+            let characters = Array(curvedText.text)
+            var characterWidths: [CGFloat] = []
+            var totalWidth: CGFloat = 0
+            
+            for char in characters {
+                let charString = String(char) as NSString
+                let width = charString.size(withAttributes: attributes).width
+                characterWidths.append(width)
+                totalWidth += width
+            }
+            
+            let startOffset = (pathLength - totalWidth) / 2
+            var currentDistance = startOffset
+            
+            for i in 0..<index {
+                currentDistance += characterWidths[i]
+            }
+            
+            if index < characterWidths.count {
+                currentDistance += characterWidths[index] / 2
+            }
+            
+            return PathUtilities.pointAtDistance(curvedText.path, distance: currentDistance)
+        } else {
+            // Distribuir uniformemente
+            let spacing = pathLength / textCount
+            let distance = spacing * CGFloat(index) + (spacing / 2)
+            
+            return PathUtilities.pointAtDistance(curvedText.path, distance: distance)
+        }
+    }
+    
+    private func convertToUIFontWeight(_ fontWeight: Font.Weight) -> UIFont.Weight {
+        switch fontWeight {
+        case .ultraLight: return .ultraLight
+        case .thin: return .thin
+        case .light: return .light
+        case .regular: return .regular
+        case .medium: return .medium
+        case .semibold: return .semibold
+        case .bold: return .bold
+        case .heavy: return .heavy
+        case .black: return .black
+        default: return .regular
+        }
     }
 }
 

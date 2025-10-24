@@ -71,6 +71,17 @@ struct PhotoEditorView: View {
                       onTap: {
                         selectedTextElement = textElement
                         editingText = textElement.text
+                        // Restaurar el fontStyle basado en el textElement
+                        currentFontStyle = FontStyle(
+                          name: textElement.customFontName ?? "Default",
+                          size: textElement.fontSize,
+                          weight: textElement.fontWeight,
+                          color: textElement.color,
+                          customFontName: textElement.customFontName,
+                          shadows: textElement.shadows.map { ShadowStyle(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y) },
+                          backgroundOpacity: textElement.backgroundOpacity,
+                          cornerRadius: textElement.cornerRadius
+                        )
                         showingTextEditor = true
                       }
                     )
@@ -227,32 +238,41 @@ struct PhotoEditorView: View {
       .sheet(isPresented: $showingFontMenu) {
         FontMenuView { fontStyle in
           currentFontStyle = fontStyle
+          print("🎨 Fuente seleccionada en el menú: \(fontStyle.customFontName ?? "sistema")")
           showingFontMenu = false
-          editingText = "Toca para editar"
-          showingTextEditor = true
+          editingText = ""
+          
+          // Usar un pequeño delay para asegurar que currentFontStyle se actualice antes de abrir el editor
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            showingTextEditor = true
+          }
         }
       }
-      .sheet(isPresented: $showingTextEditor) {
+      .sheet(item: Binding(
+        get: { showingTextEditor ? (currentFontStyle ?? FontStyle(
+          name: "Default",
+          size: 32,
+          weight: .regular,
+          color: .white,
+          customFontName: nil,
+          shadows: [],
+          backgroundOpacity: 0.3,
+          cornerRadius: 8
+        )) : nil },
+        set: { _ in }
+      )) { fontStyle in
+        let _ = print("📋 Abriendo editor con fuente: \(fontStyle.customFontName ?? "sistema")")
+        
         TextInputView(
           text: $editingText,
-          fontStyle: currentFontStyle
-            ?? FontStyle(
-              name: "Default",
-              size: 32,
-              weight: .regular,
-              color: .white,
-              customFontName: nil,
-              shadows: [],
-              backgroundOpacity: 0.3,
-              cornerRadius: 8
-            ),
+          fontStyle: fontStyle,
           onDone: {
             if !editingText.isEmpty {
               if let selectedElement = selectedTextElement,
                 let index = textElements.firstIndex(where: { $0.id == selectedElement.id })
               {
                 textElements[index].text = editingText
-              } else if let fontStyle = currentFontStyle {
+              } else {
                 let newElement = TextElement(
                   text: editingText,
                   position: CGPoint(x: UIScreen.main.bounds.width / 2, y: 200),
@@ -618,7 +638,8 @@ struct TextElementView: View {
   }
 }
 
-struct FontStyle {
+struct FontStyle: Identifiable {
+  let id = UUID()
   let name: String
   let size: CGFloat
   let weight: Font.Weight
@@ -651,33 +672,59 @@ struct TextInputView: View {
 
   var body: some View {
     NavigationView {
-      VStack(spacing: 16) {
+      VStack(spacing: 20) {
         Spacer()
 
-        TextField("Escribe tu texto aquí", text: $text)
+        // Campo de entrada - usando directamente la fuente personalizada
+        TextField("", text: $text)
           .font(fontStyle.customFontName != nil 
                 ? .custom(fontStyle.customFontName!, size: fontStyle.size)
                 : .system(size: fontStyle.size, weight: fontStyle.weight))
           .foregroundColor(fontStyle.color)
           .multilineTextAlignment(.center)
           .padding()
+          .background(Color.white.opacity(0.05))
+          .cornerRadius(10)
+          .padding(.horizontal, 20)
           .focused($isFocused)
           .onChange(of: text) { oldValue, newValue in
             if newValue.count > maxCharacters {
               text = String(newValue.prefix(maxCharacters))
             }
           }
+          .onAppear {
+            // Debug: imprimir qué fuente estamos usando
+            if let fontName = fontStyle.customFontName {
+              print("🔤 Fuente personalizada: \(fontName)")
+              // Verificar si la fuente existe
+              if UIFont(name: fontName, size: fontStyle.size) != nil {
+                print("✅ Fuente cargada correctamente")
+              } else {
+                print("❌ ERROR: Fuente '\(fontName)' no encontrada")
+                print("Fuentes disponibles que contienen '\(fontName)':")
+                for family in UIFont.familyNames {
+                  let fonts = UIFont.fontNames(forFamilyName: family)
+                  for font in fonts {
+                    if font.lowercased().contains(fontName.lowercased()) {
+                      print("  - \(font)")
+                    }
+                  }
+                }
+              }
+            } else {
+              print("📝 Usando fuente del sistema")
+            }
+          }
 
         Text("\(remainingCharacters) caracteres restantes")
           .font(.caption)
           .foregroundColor(remainingCharacters < 20 ? .red : .white.opacity(0.7))
-          .padding(.bottom, 8)
 
         Spacer()
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(Color.black.opacity(0.8))
-      .navigationTitle("Agregar Texto")
+      .background(Color.black.opacity(0.9))
+      .navigationTitle("")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
@@ -697,7 +744,10 @@ struct TextInputView: View {
       .toolbarBackground(Color.black.opacity(0.9), for: .navigationBar)
       .toolbarBackground(.visible, for: .navigationBar)
       .onAppear {
-        isFocused = true
+        // Pequeño delay para asegurar que el keyboard aparezca
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+          isFocused = true
+        }
       }
     }
   }

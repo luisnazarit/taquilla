@@ -23,6 +23,10 @@ struct PhotoEditorView: View {
   @State private var editingCurvedText = ""
   @State private var currentDrawnPath: [CGPoint] = []
   @State private var selectedCurvedTextIndex: Int? = nil
+  
+  // Template states
+  @State private var showingTemplatePicker = false
+  @State private var weatherOverlay: WeatherOverlay?
 
   // Imagen con filtro aplicado
   private var displayImage: UIImage? {
@@ -33,7 +37,7 @@ struct PhotoEditorView: View {
   var body: some View {
     NavigationView {
       VStack(spacing: 0) {
-        // Logo en la parte superior
+        // Logo y botón guardar en la parte superior
         HStack {
           Spacer()
           Image("Logo")
@@ -42,6 +46,16 @@ struct PhotoEditorView: View {
             .frame(height: 30)
             .padding(.vertical, 8)
           Spacer()
+          
+          // Botón guardar en la esquina superior derecha
+          if selectedImage != nil {
+            Button(action: { saveImage() }) {
+              Image(systemName: "square.and.arrow.down")
+                .font(.title2)
+                .foregroundColor(.green)
+                .padding(.trailing, 16)
+            }
+          }
         }
         .background(Color(.systemBackground))
 
@@ -136,6 +150,20 @@ struct PhotoEditorView: View {
                     )
                     .allowsHitTesting(true)  // Solo capturar toques cuando está activo
                   }
+                  
+                  // Weather overlay
+                  if let weather = weatherOverlay {
+                    VStack {
+                      Spacer()
+                      HStack {
+                        Spacer()
+                        WeatherOverlayView(weather: weather, onRemove: {
+                          weatherOverlay = nil
+                        })
+                        .padding(20)
+                      }
+                    }
+                  }
                 }
               )
           } else {
@@ -197,17 +225,15 @@ struct PhotoEditorView: View {
                 }
                 .foregroundColor(showingFilterPicker ? .orange : .blue)
               }
-            }
-
-            if selectedImage != nil {
-              Button(action: { saveImage() }) {
+              
+              Button(action: { showingTemplatePicker.toggle() }) {
                 VStack {
-                  Image(systemName: "square.and.arrow.down")
+                  Image(systemName: "square.grid.2x2")
                     .font(.title2)
-                  Text("Guardar")
+                  Text("Plantillas")
                     .font(.caption)
                 }
-                .foregroundColor(.green)
+                .foregroundColor(showingTemplatePicker ? .orange : .blue)
               }
             }
           }
@@ -222,6 +248,33 @@ struct PhotoEditorView: View {
                     isSelected: currentFilter == filter,
                     onTap: { currentFilter = filter }
                   )
+                }
+              }
+              .padding(.horizontal)
+            }
+          }
+          
+          if showingTemplatePicker {
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 12) {
+                // Plantilla: Clima y ubicación
+                Button(action: {
+                  Task {
+                    await loadWeatherData()
+                  }
+                }) {
+                  VStack(spacing: 4) {
+                    Image(systemName: "cloud.sun.fill")
+                      .font(.system(size: 32))
+                      .foregroundColor(.orange)
+                    Text("Clima y\nUbicación")
+                      .font(.caption2)
+                      .multilineTextAlignment(.center)
+                      .foregroundColor(.primary)
+                  }
+                  .frame(width: 80, height: 80)
+                  .background(Color.gray.opacity(0.2))
+                  .cornerRadius(12)
                 }
               }
               .padding(.horizontal)
@@ -545,6 +598,28 @@ struct PhotoEditorView: View {
 
     return optimalSize
   }
+  
+  func loadWeatherData() async {
+    // Por ahora, vamos a usar datos de ejemplo
+    // En la próxima iteración integraremos una API real de clima
+    let exampleWeather = WeatherOverlay(
+      temperature: "22°C",
+      location: "Santiago, Chile",
+      weatherIcon: "sun.max.fill"
+    )
+    
+    await MainActor.run {
+      weatherOverlay = exampleWeather
+      showingTemplatePicker = false
+    }
+  }
+}
+
+// MARK: - Weather Overlay Model
+struct WeatherOverlay {
+  let temperature: String
+  let location: String
+  let weatherIcon: String
 }
 
 struct TextElementView: View {
@@ -1153,6 +1228,50 @@ struct CurvedTextInputView: View {
       .onAppear {
         isFocused = true
       }
+    }
+  }
+}
+
+// MARK: - Weather Overlay View
+struct WeatherOverlayView: View {
+  let weather: WeatherOverlay
+  let onRemove: () -> Void
+  
+  var body: some View {
+    VStack(alignment: .trailing, spacing: 8) {
+      // Botón para remover
+      Button(action: onRemove) {
+        Image(systemName: "xmark.circle.fill")
+          .font(.title3)
+          .foregroundColor(.white.opacity(0.8))
+      }
+      
+      // Diseño del clima
+      VStack(spacing: 8) {
+        HStack(spacing: 12) {
+          Image(systemName: weather.weatherIcon)
+            .font(.system(size: 40))
+            .foregroundColor(.white)
+          
+          Text(weather.temperature)
+            .font(.system(size: 36, weight: .bold))
+            .foregroundColor(.white)
+        }
+        
+        Text(weather.location)
+          .font(.system(size: 16, weight: .medium))
+          .foregroundColor(.white)
+      }
+      .padding(16)
+      .background(
+        LinearGradient(
+          colors: [Color.orange.opacity(0.8), Color.pink.opacity(0.8)],
+          startPoint: .topLeading,
+          endPoint: .bottomTrailing
+        )
+      )
+      .cornerRadius(16)
+      .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
     }
   }
 }

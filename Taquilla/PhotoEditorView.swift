@@ -575,8 +575,8 @@ struct TextElementView: View {
                 ? .custom(textElement.customFontName!, size: textElement.fontSize)
                 : .system(size: textElement.fontSize, weight: textElement.fontWeight))
           .foregroundColor(shadow.color)
-          .lineLimit(1)
-          .fixedSize()
+          .multilineTextAlignment(.center)
+          .fixedSize() // Mantener tamaño natural sin restricciones
           .blur(radius: shadow.radius)
           .offset(x: shadow.x, y: shadow.y)
       }
@@ -587,8 +587,8 @@ struct TextElementView: View {
               ? .custom(textElement.customFontName!, size: textElement.fontSize)
               : .system(size: textElement.fontSize, weight: textElement.fontWeight))
         .foregroundColor(textElement.color)
-        .lineLimit(1)
-        .fixedSize()
+        .multilineTextAlignment(.center)
+        .fixedSize() // Mantener tamaño natural sin restricciones
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 6)
@@ -675,46 +675,48 @@ struct TextInputView: View {
       VStack(spacing: 20) {
         Spacer()
 
-        // Campo de entrada - usando directamente la fuente personalizada
-        TextField("", text: $text)
-          .font(fontStyle.customFontName != nil 
-                ? .custom(fontStyle.customFontName!, size: fontStyle.size)
-                : .system(size: fontStyle.size, weight: fontStyle.weight))
-          .foregroundColor(fontStyle.color)
-          .multilineTextAlignment(.center)
-          .padding()
-          .background(Color.white.opacity(0.05))
-          .cornerRadius(10)
-          .padding(.horizontal, 20)
-          .focused($isFocused)
-          .onChange(of: text) { oldValue, newValue in
-            if newValue.count > maxCharacters {
-              text = String(newValue.prefix(maxCharacters))
+        // Campo de entrada multilínea - usando directamente la fuente personalizada
+        ZStack(alignment: .topLeading) {
+          TextEditor(text: $text)
+            .font(fontStyle.customFontName != nil 
+                  ? .custom(fontStyle.customFontName!, size: fontStyle.size)
+                  : .system(size: fontStyle.size, weight: fontStyle.weight))
+            .foregroundColor(fontStyle.color)
+            .scrollContentBackground(.hidden)
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(10)
+            .padding(.horizontal, 20)
+            .frame(minHeight: 150, maxHeight: 250)
+            .focused($isFocused)
+            .onChange(of: text) { oldValue, newValue in
+              if newValue.count > maxCharacters {
+                text = String(newValue.prefix(maxCharacters))
+              }
             }
-          }
-          .onAppear {
-            // Debug: imprimir qué fuente estamos usando
-            if let fontName = fontStyle.customFontName {
-              print("🔤 Fuente personalizada: \(fontName)")
-              // Verificar si la fuente existe
-              if UIFont(name: fontName, size: fontStyle.size) != nil {
-                print("✅ Fuente cargada correctamente")
-              } else {
-                print("❌ ERROR: Fuente '\(fontName)' no encontrada")
-                print("Fuentes disponibles que contienen '\(fontName)':")
-                for family in UIFont.familyNames {
-                  let fonts = UIFont.fontNames(forFamilyName: family)
-                  for font in fonts {
-                    if font.lowercased().contains(fontName.lowercased()) {
-                      print("  - \(font)")
+            .onAppear {
+              // Debug: imprimir qué fuente estamos usando
+              if let fontName = fontStyle.customFontName {
+                print("🔤 Fuente personalizada: \(fontName)")
+                // Verificar si la fuente existe
+                if UIFont(name: fontName, size: fontStyle.size) != nil {
+                  print("✅ Fuente cargada correctamente")
+                } else {
+                  print("❌ ERROR: Fuente '\(fontName)' no encontrada")
+                  print("Fuentes disponibles que contienen '\(fontName)':")
+                  for family in UIFont.familyNames {
+                    let fonts = UIFont.fontNames(forFamilyName: family)
+                    for font in fonts {
+                      if font.lowercased().contains(fontName.lowercased()) {
+                        print("  - \(font)")
+                      }
                     }
                   }
                 }
+              } else {
+                print("📝 Usando fuente del sistema")
               }
-            } else {
-              print("📝 Usando fuente del sistema")
             }
-          }
+        }
 
         Text("\(remainingCharacters) caracteres restantes")
           .font(.caption)

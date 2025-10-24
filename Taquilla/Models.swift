@@ -11,6 +11,16 @@ struct TextElement: Identifiable {
     var color: Color
     var scale: CGFloat = 1.0
     var customFontName: String? = nil
+    var shadows: [TextShadow] = []
+    var backgroundOpacity: CGFloat = 0.3
+    var cornerRadius: CGFloat = 8
+}
+
+struct TextShadow {
+    let color: Color
+    let radius: CGFloat
+    let x: CGFloat
+    let y: CGFloat
 }
 
 // MARK: - Curved Text Element Model

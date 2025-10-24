@@ -236,7 +236,16 @@ struct PhotoEditorView: View {
         TextInputView(
           text: $editingText,
           fontStyle: currentFontStyle
-            ?? FontStyle(name: "Clásico", size: 24, weight: .regular, color: .white, customFontName: nil),
+            ?? FontStyle(
+              name: "Default",
+              size: 32,
+              weight: .regular,
+              color: .white,
+              customFontName: nil,
+              shadows: [],
+              backgroundOpacity: 0.3,
+              cornerRadius: 8
+            ),
           onDone: {
             if !editingText.isEmpty {
               if let selectedElement = selectedTextElement,
@@ -250,7 +259,10 @@ struct PhotoEditorView: View {
                   fontSize: fontStyle.size,
                   fontWeight: fontStyle.weight,
                   color: fontStyle.color,
-                  customFontName: fontStyle.customFontName
+                  customFontName: fontStyle.customFontName,
+                  shadows: fontStyle.shadows.map { TextShadow(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y) },
+                  backgroundOpacity: fontStyle.backgroundOpacity,
+                  cornerRadius: fontStyle.cornerRadius
                 )
                 textElements.append(newElement)
               }
@@ -342,19 +354,70 @@ struct PhotoEditorView: View {
           font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
         }
         
-        let attributes: [NSAttributedString.Key: Any] = [
+        // Calcular tamaño y posición del texto
+        let baseAttributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(textElement.color),
         ]
-
-        let attributedString = NSAttributedString(string: textElement.text, attributes: attributes)
+        let attributedString = NSAttributedString(string: textElement.text, attributes: baseAttributes)
         let textSize = attributedString.size()
+        
+        // Calcular el área con padding
+        let paddingH: CGFloat = 12
+        let paddingV: CGFloat = 6
+        let backgroundRect = CGRect(
+          x: textElement.position.x - (textSize.width + paddingH * 2) / 2,
+          y: textElement.position.y - (textSize.height + paddingV * 2) / 2,
+          width: textSize.width + paddingH * 2,
+          height: textSize.height + paddingV * 2
+        )
+        
+        // Dibujar fondo si tiene opacidad
+        if textElement.backgroundOpacity > 0 {
+          context.cgContext.saveGState()
+          context.cgContext.setFillColor(UIColor.black.withAlphaComponent(textElement.backgroundOpacity).cgColor)
+          
+          if textElement.cornerRadius > 0 {
+            let path = UIBezierPath(roundedRect: backgroundRect, cornerRadius: textElement.cornerRadius)
+            path.fill()
+          } else {
+            context.cgContext.fill(backgroundRect)
+          }
+          
+          context.cgContext.restoreGState()
+        }
+        
         let textRect = CGRect(
           x: textElement.position.x - textSize.width / 2,
           y: textElement.position.y - textSize.height / 2,
           width: textSize.width,
           height: textSize.height
         )
+        
+        // Dibujar sombras primero
+        context.cgContext.saveGState()
+        for shadow in textElement.shadows {
+          let shadowAttributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: UIColor(shadow.color),
+          ]
+          let shadowString = NSAttributedString(string: textElement.text, attributes: shadowAttributes)
+          let shadowRect = textRect.offsetBy(dx: shadow.x, dy: shadow.y)
+          
+          // Simular blur usando múltiples capas con opacidad reducida
+          let blurSteps = Int(shadow.radius / 2)
+          for i in 0...max(1, blurSteps) {
+            context.cgContext.setAlpha(0.3 / CGFloat(max(1, blurSteps)))
+            let offset = CGFloat(i) * 0.5
+            shadowString.draw(in: shadowRect.offsetBy(dx: offset, dy: 0))
+            shadowString.draw(in: shadowRect.offsetBy(dx: -offset, dy: 0))
+            shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: offset))
+            shadowString.draw(in: shadowRect.offsetBy(dx: 0, dy: -offset))
+          }
+        }
+        context.cgContext.restoreGState()
+        
+        // Dibujar texto principal
         attributedString.draw(in: textRect)
       }
 
@@ -484,21 +547,41 @@ struct TextElementView: View {
   }
 
   var body: some View {
-    Text(textElement.text)
-      .font(textElement.customFontName != nil 
-            ? .custom(textElement.customFontName!, size: textElement.fontSize)
-            : .system(size: textElement.fontSize, weight: textElement.fontWeight))
-      .foregroundColor(textElement.color)
-      .lineLimit(1)
-      .fixedSize()
-      .padding(.horizontal, 12)
-      .padding(.vertical, 6)
-      .background(Color.black.opacity(0.3))
-      .cornerRadius(8)
-      .padding(minimumTouchArea)
-      .contentShape(Rectangle())
-      .scaleEffect(textElement.scale)
-      .position(textElement.position)
+    ZStack {
+      // Aplicar múltiples sombras
+      ForEach(Array(textElement.shadows.enumerated()), id: \.offset) { index, shadow in
+        Text(textElement.text)
+          .font(textElement.customFontName != nil 
+                ? .custom(textElement.customFontName!, size: textElement.fontSize)
+                : .system(size: textElement.fontSize, weight: textElement.fontWeight))
+          .foregroundColor(shadow.color)
+          .lineLimit(1)
+          .fixedSize()
+          .blur(radius: shadow.radius)
+          .offset(x: shadow.x, y: shadow.y)
+      }
+      
+      // Texto principal
+      Text(textElement.text)
+        .font(textElement.customFontName != nil 
+              ? .custom(textElement.customFontName!, size: textElement.fontSize)
+              : .system(size: textElement.fontSize, weight: textElement.fontWeight))
+        .foregroundColor(textElement.color)
+        .lineLimit(1)
+        .fixedSize()
+    }
+    .padding(.horizontal, 12)
+    .padding(.vertical, 6)
+    .background(
+      textElement.backgroundOpacity > 0 
+        ? Color.black.opacity(textElement.backgroundOpacity)
+        : Color.clear
+    )
+    .cornerRadius(textElement.cornerRadius)
+    .padding(minimumTouchArea)
+    .contentShape(Rectangle())
+    .scaleEffect(textElement.scale)
+    .position(textElement.position)
       .gesture(
         SimultaneousGesture(
           DragGesture()
@@ -516,7 +599,7 @@ struct TextElementView: View {
           MagnificationGesture()
             .onChanged { value in
               // Sensibilidad muy reducida para cambios suaves y graduales
-              let sensitivity: CGFloat = 0.2
+              let sensitivity: CGFloat = 0.3
               let delta = (value - currentMagnification) * sensitivity
               currentMagnification = value
 
@@ -541,6 +624,16 @@ struct FontStyle {
   let weight: Font.Weight
   let color: Color
   let customFontName: String? // Nombre de la fuente personalizada
+  let shadows: [ShadowStyle] // Sombras para efectos
+  let backgroundOpacity: CGFloat // Opacidad del fondo
+  let cornerRadius: CGFloat // Radio de las esquinas
+}
+
+struct ShadowStyle {
+  let color: Color
+  let radius: CGFloat
+  let x: CGFloat
+  let y: CGFloat
 }
 
 struct TextInputView: View {
@@ -615,21 +708,56 @@ struct FontMenuView: View {
   @Environment(\.dismiss) private var dismiss
 
   private let fontStyles: [FontStyle] = [
-    // Fuentes personalizadas
-    FontStyle(name: "Dogica Pixel", size: 28, weight: .regular, color: .white, customFontName: "Dogica_Pixel"),
-    FontStyle(name: "Dogica Bold", size: 28, weight: .bold, color: .white, customFontName: "Dogica_Pixel_Bold"),
-    FontStyle(name: "Retrock", size: 36, weight: .regular, color: .white, customFontName: "Retrock"),
-    FontStyle(name: "Returns", size: 36, weight: .regular, color: .white, customFontName: "Returns"),
-    
-    // Fuentes del sistema con colores
-    FontStyle(name: "Clásico", size: 32, weight: .regular, color: .white, customFontName: nil),
-    FontStyle(name: "Bold", size: 36, weight: .bold, color: .white, customFontName: nil),
-    FontStyle(name: "Amarillo", size: 32, weight: .semibold, color: .yellow, customFontName: nil),
-    FontStyle(name: "Rojo", size: 32, weight: .semibold, color: .red, customFontName: nil),
-    FontStyle(name: "Azul", size: 32, weight: .semibold, color: .blue, customFontName: nil),
-    FontStyle(name: "Verde", size: 32, weight: .semibold, color: .green, customFontName: nil),
-    FontStyle(name: "Rosa", size: 32, weight: .semibold, color: .pink, customFontName: nil),
-    FontStyle(name: "Morado", size: 32, weight: .semibold, color: .purple, customFontName: nil),
+    // Dogica Pixel - Fondo 100% negro sin bordes redondeados
+    FontStyle(
+      name: "Dogica Pixel",
+      size: 28,
+      weight: .regular,
+      color: .white,
+      customFontName: "Dogica_Pixel",
+      shadows: [],
+      backgroundOpacity: 1.0,
+      cornerRadius: 0
+    ),
+    // Dogica Bold - Fondo 100% negro sin bordes redondeados
+    FontStyle(
+      name: "Dogica Bold",
+      size: 28,
+      weight: .bold,
+      color: .white,
+      customFontName: "Dogica_Pixel_Bold",
+      shadows: [],
+      backgroundOpacity: 1.0,
+      cornerRadius: 0
+    ),
+    // Retrock - Sombra sutil, sin marco
+    FontStyle(
+      name: "Retrock",
+      size: 36,
+      weight: .regular,
+      color: .white,
+      customFontName: "Retrock",
+      shadows: [
+        ShadowStyle(color: .black.opacity(0.5), radius: 4, x: 2, y: 2)
+      ],
+      backgroundOpacity: 0,
+      cornerRadius: 0
+    ),
+    // Returns - Triple sombra dura hacia abajo (negro, cyan, magenta)
+    FontStyle(
+      name: "Returns",
+      size: 36,
+      weight: .regular,
+      color: .white,
+      customFontName: "Returns",
+      shadows: [
+        ShadowStyle(color: .black, radius: 0, x: 6, y: 6),
+        ShadowStyle(color: .cyan, radius: 0, x: 4, y: 4),
+        ShadowStyle(color: Color(red: 1.0, green: 0.0, blue: 1.0), radius: 0, x: 2, y: 2) // Magenta
+      ],
+      backgroundOpacity: 0,
+      cornerRadius: 0
+    ),
   ]
 
   var body: some View {

@@ -2,13 +2,13 @@ import PhotosUI
 import SwiftUI
 
 struct PhotoEditorView: View {
-  @State private var selectedImage: UIImage?
-  @State private var showingImagePicker = false
-  @State private var currentFilter: PhotoFilter = .none
-  @State private var textElements: [TextElement] = []
-  @State private var selectedTextElement: TextElement?
-  @State private var showingTextEditor = false
-  @State private var showingFilterPicker = false
+    @State private var selectedImage: UIImage?
+    @State private var showingImagePicker = false
+    @State private var currentFilter: PhotoFilter = .none
+    @State private var textElements: [TextElement] = []
+    @State private var selectedTextElement: TextElement?
+    @State private var showingTextEditor = false
+    @State private var showingFilterPicker = false
   @State private var showingFontMenu = false
   @State private var editingText = ""
   @State private var showingKeyboard = false
@@ -39,14 +39,14 @@ struct PhotoEditorView: View {
     guard let image = selectedImage else { return nil }
     return currentFilter.apply(to: image)
   }
-
-  var body: some View {
-    NavigationView {
-      VStack(spacing: 0) {
-        // Logo y botones en la parte superior
-        HStack {
-          // Botón para descartar imagen (izquierda)
-          if selectedImage != nil {
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 0) {
+        // Botones en la parte superior (solo cuando hay imagen)
+        if selectedImage != nil {
+          HStack {
+            // Botón para descartar imagen (izquierda)
             Button(action: {
               // Descartar imagen y limpiar todo
               selectedImage = nil
@@ -60,23 +60,10 @@ struct PhotoEditorView: View {
                 .foregroundColor(.white)
                 .padding(.leading, 16)
             }
-          } else {
+            
             Spacer()
-              .frame(width: 56)
-          }
-          
-          Spacer()
-          
-          Image("Logo")
-            .resizable()
-            .scaledToFit()
-            .frame(height: 30)
-            .padding(.vertical, 8)
-          
-          Spacer()
-          
-          // Botones de compartir y guardar en la esquina superior derecha
-          if selectedImage != nil {
+            
+            // Botones de compartir y guardar en la esquina superior derecha
             HStack(spacing: 12) {
               // Botón de compartir
               Button(action: { shareToInstagramStory() }) {
@@ -93,19 +80,17 @@ struct PhotoEditorView: View {
               }
             }
             .padding(.trailing, 16)
-          } else {
-            Spacer()
-              .frame(width: 56)
           }
+          .frame(height: 44)
+          .background(Color(.systemBackground))
         }
-        .background(Color(.systemBackground))
 
-        ZStack {
+                ZStack {
           if let image = displayImage {
             GeometryReader { geometry in
-              Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                 .background(
                   GeometryReader { imageGeometry in
                     Color.clear.onAppear {
@@ -135,7 +120,7 @@ struct PhotoEditorView: View {
                         }
                       },
                       onTap: {
-                        selectedTextElement = textElement
+                                            selectedTextElement = textElement
                         editingText = textElement.text
                         // Restaurar el fontStyle basado en el textElement
                         currentFontStyle = FontStyle(
@@ -148,9 +133,9 @@ struct PhotoEditorView: View {
                           backgroundOpacity: textElement.backgroundOpacity,
                           cornerRadius: textElement.cornerRadius
                         )
-                        showingTextEditor = true
-                      }
-                    )
+                                            showingTextEditor = true
+                                        }
+                                )
                   }
 
                   // Textos curvos
@@ -220,31 +205,48 @@ struct PhotoEditorView: View {
               )
             }
           } else {
-            VStack {
-              Image(systemName: "photo")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
-              Text("Selecciona una foto para editar")
-                .foregroundColor(.gray)
-            }
-          }
-        }
-        .frame(maxHeight: .infinity)
-        .background(Color.black)
-
-        VStack(spacing: 16) {
-          HStack(spacing: 20) {
+            // Zona cliqueable con logo para seleccionar foto
             Button(action: { showingImagePicker = true }) {
-              VStack {
+              VStack(spacing: 20) {
+                Spacer()
+                
+                Image("Logo")
+                  .resizable()
+                  .scaledToFit()
+                  .frame(width: 200) // Limitar ancho máximo
+                  .padding(.horizontal, 40) // Espaciado de los bordes
+                
                 Image(systemName: "photo.badge.plus")
-                  .font(.title2)
-                Text("Foto")
+                  .font(.system(size: 50))
+                  .foregroundColor(.white.opacity(0.6))
+                
+                Text("Toca para seleccionar una foto")
+                  .font(.headline)
+                  .foregroundColor(.white.opacity(0.6))
+                
+                Spacer()
+                
+                // Texto informativo
+                Text("Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con ❤️")
                   .font(.caption)
+                  .foregroundColor(.white.opacity(0.4))
+                  .multilineTextAlignment(.center)
+                  .padding(.horizontal, 30)
+                  .padding(.bottom, 40)
               }
-              .foregroundColor(.white)
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+              .contentShape(Rectangle())
             }
-
-            if selectedImage != nil {
+            .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .frame(maxHeight: .infinity)
+                .background(Color.black)
+                
+        // Barra de herramientas (solo cuando hay imagen)
+        if selectedImage != nil {
+                VStack(spacing: 16) {
+                    HStack(spacing: 20) {
               Button(action: { showingFontMenu = true }) {
                 VStack {
                   Image(systemName: "text.badge.plus")
@@ -260,86 +262,86 @@ struct PhotoEditorView: View {
                 drawingMode = .none
                 currentDrawingPath = []
               }) {
-                VStack {
+                            VStack {
                   Image(systemName: "scribble.variable")
-                    .font(.title2)
+                                    .font(.title2)
                   Text("Curvo")
-                    .font(.caption)
-                }
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
-              }
-
+                        }
+                        
               Button(action: { showingFilterPicker.toggle() }) {
-                VStack {
-                  Image(systemName: "slider.horizontal.3")
-                    .font(.title2)
-                  Text("Filtros")
-                    .font(.caption)
-                }
+                            VStack {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.title2)
+                                Text("Filtros")
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
-              }
-              
+                        }
+                        
               Button(action: { showingTemplatePicker.toggle() }) {
-                VStack {
+                            VStack {
                   Image(systemName: "square.grid.2x2")
-                    .font(.title2)
+                                    .font(.title2)
                   Text("Plantillas")
-                    .font(.caption)
-                }
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
-              }
-            }
-          }
-          .padding(.horizontal)
-
-          if showingFilterPicker {
-            ScrollView(.horizontal, showsIndicators: false) {
-              HStack(spacing: 12) {
-                ForEach(PhotoFilter.allCases, id: \.self) { filter in
-                  FilterPreviewView(
-                    filter: filter,
-                    isSelected: currentFilter == filter,
-                    onTap: { currentFilter = filter }
-                  )
-                }
-              }
-              .padding(.horizontal)
-            }
-          }
-          
-          if showingTemplatePicker {
-            ScrollView(.horizontal, showsIndicators: false) {
-              HStack(spacing: 12) {
-                // Plantilla: Clima y ubicación
-                Button(action: {
-                  Task {
-                    await loadWeatherData()
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    if showingFilterPicker {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(PhotoFilter.allCases, id: \.self) { filter in
+                                    FilterPreviewView(
+                                        filter: filter,
+                                        isSelected: currentFilter == filter,
+                                        onTap: { currentFilter = filter }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+            
+            if showingTemplatePicker {
+              ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                  // Plantilla: Clima y ubicación
+                  Button(action: {
+                    Task {
+                      await loadWeatherData()
+                    }
+                  }) {
+                    VStack(spacing: 4) {
+                      Image(systemName: "cloud.sun.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.orange)
+                      Text("Clima y\nUbicación")
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
+                    }
+                    .frame(width: 80, height: 80)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
                   }
-                }) {
-                  VStack(spacing: 4) {
-                    Image(systemName: "cloud.sun.fill")
-                      .font(.system(size: 32))
-                      .foregroundColor(.orange)
-                    Text("Clima y\nUbicación")
-                      .font(.caption2)
-                      .multilineTextAlignment(.center)
-                      .foregroundColor(.primary)
-                  }
-                  .frame(width: 80, height: 80)
-                  .background(Color.gray.opacity(0.2))
-                  .cornerRadius(12)
                 }
+                .padding(.horizontal)
               }
-              .padding(.horizontal)
             }
-          }
-        }
-        .padding()
-        .background(Color(.systemBackground))
+                }
+                .padding()
+                .background(Color(.systemBackground))
+            }
       }
       .navigationBarHidden(true)
-      .sheet(isPresented: $showingImagePicker) {
-        ImagePicker(selectedImage: $selectedImage)
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(selectedImage: $selectedImage)
       }
       .sheet(isPresented: $showingFontMenu) {
         FontMenuView { fontStyle in
@@ -472,11 +474,11 @@ struct PhotoEditorView: View {
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .animation(.spring(), value: showingSaveSuccess)
-          }
-        }
-      )
-    }
-  }
+                            }
+                        }
+                    )
+                }
+            }
 
   func saveImage() {
     guard let image = displayImage else { return }
@@ -731,7 +733,7 @@ struct PhotoEditorView: View {
       let distance = spacing * CGFloat(index) + (spacing / 2)
 
       if let positionInfo = PathUtilities.pointAtDistance(scaledPath, distance: distance) {
-        let attributes: [NSAttributedString.Key: Any] = [
+                let attributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(curvedText.color),
         ]
@@ -915,5 +917,5 @@ struct PhotoEditorView: View {
 
 
 #Preview {
-  PhotoEditorView()
+    PhotoEditorView()
 }

@@ -1,5 +1,32 @@
 {
   "source": "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/ContentView.swift",
-  "tables": {},
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Editor",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Collage",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 18
+        }
+      },
+      {
+        "comment": "",
+        "key": "Galería",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 25
+        }
+      }
+    ]
+  },
   "version": 1
 }

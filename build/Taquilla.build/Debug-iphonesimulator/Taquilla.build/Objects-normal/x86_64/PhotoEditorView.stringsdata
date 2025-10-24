@@ -7,7 +7,7 @@
         "key": "Selecciona una foto para editar",
         "location": {
           "startingColumn": 34,
-          "startingLine": 72
+          "startingLine": 104
         }
       },
       {
@@ -15,15 +15,23 @@
         "key": "Foto",
         "location": {
           "startingColumn": 38,
-          "startingLine": 86
+          "startingLine": 118
         }
       },
       {
         "comment": "",
-        "key": "Agregar Texto",
+        "key": "Texto",
         "location": {
           "startingColumn": 42,
-          "startingLine": 97
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Curvo",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 143
         }
       },
       {
@@ -31,7 +39,7 @@
         "key": "Filtros",
         "location": {
           "startingColumn": 42,
-          "startingLine": 107
+          "startingLine": 153
         }
       },
       {
@@ -39,7 +47,7 @@
         "key": "Guardar",
         "location": {
           "startingColumn": 42,
-          "startingLine": 119
+          "startingLine": 165
         }
       },
       {
@@ -47,7 +55,7 @@
         "key": "Agregar Texto",
         "location": {
           "startingColumn": 30,
-          "startingLine": 357
+          "startingLine": 477
         }
       },
       {
@@ -55,7 +63,7 @@
         "key": "%lld caracteres restantes",
         "location": {
           "startingColumn": 22,
-          "startingLine": 348
+          "startingLine": 468
         }
       },
       {
@@ -63,7 +71,7 @@
         "key": "Escribe tu texto aquí",
         "location": {
           "startingColumn": 27,
-          "startingLine": 336
+          "startingLine": 456
         }
       },
       {
@@ -71,7 +79,7 @@
         "key": "Cancelar",
         "location": {
           "startingColumn": 28,
-          "startingLine": 361
+          "startingLine": 481
         }
       },
       {
@@ -79,7 +87,7 @@
         "key": "Listo",
         "location": {
           "startingColumn": 28,
-          "startingLine": 367
+          "startingLine": 487
         }
       },
       {
@@ -87,7 +95,7 @@
         "key": "Tipos de Letra",
         "location": {
           "startingColumn": 30,
-          "startingLine": 437
+          "startingLine": 557
         }
       },
       {
@@ -95,7 +103,7 @@
         "key": "Elige un estilo de texto",
         "location": {
           "startingColumn": 22,
-          "startingLine": 405
+          "startingLine": 525
         }
       },
       {
@@ -103,7 +111,7 @@
         "key": "Aa",
         "location": {
           "startingColumn": 38,
-          "startingLine": 416
+          "startingLine": 536
         }
       },
       {
@@ -111,7 +119,47 @@
         "key": "Cerrar",
         "location": {
           "startingColumn": 28,
-          "startingLine": 441
+          "startingLine": 561
+        }
+      },
+      {
+        "comment": "",
+        "key": "Texto Curvo",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 724
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld caracteres restantes",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 715
+        }
+      },
+      {
+        "comment": "",
+        "key": "Escribe tu texto aquí",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 703
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancelar",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 728
+        }
+      },
+      {
+        "comment": "",
+        "key": "Listo",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 734
         }
       }
     ]

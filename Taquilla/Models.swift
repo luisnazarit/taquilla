@@ -131,6 +131,7 @@ enum PhotoFilter: CaseIterable {
             return image
         }
         
-        return UIImage(cgImage: cgImage)
+        // Preservar la orientación original de la imagen
+        return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
     }
 }

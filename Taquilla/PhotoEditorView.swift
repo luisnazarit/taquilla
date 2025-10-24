@@ -14,11 +14,29 @@ struct PhotoEditorView: View {
     @State private var showingKeyboard = false
     @State private var currentFontStyle: FontStyle?
     
+    // Imagen con filtro aplicado
+    private var displayImage: UIImage? {
+        guard let image = selectedImage else { return nil }
+        return currentFilter.apply(to: image)
+    }
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                // Logo en la parte superior
+                HStack {
+                    Spacer()
+                    Image("Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 30)
+                        .padding(.vertical, 8)
+                    Spacer()
+                }
+                .background(Color(.systemBackground))
+                
                 ZStack {
-                    if let image = selectedImage {
+                    if let image = displayImage {
                         Image(uiImage: image)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -81,19 +99,19 @@ struct PhotoEditorView: View {
                                 }
                                 .foregroundColor(.purple)
                             }
-                        }
-                        
-                        Button(action: { showingFilterPicker = true }) {
-                            VStack {
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.title2)
-                                Text("Filtros")
-                                    .font(.caption)
+                            
+                            Button(action: { showingFilterPicker.toggle() }) {
+                                VStack {
+                                    Image(systemName: "slider.horizontal.3")
+                                        .font(.title2)
+                                    Text("Filtros")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(showingFilterPicker ? .orange : .blue)
                             }
-                            .foregroundColor(.blue)
                         }
                         
-                        if selectedImage != nil && !textElements.isEmpty {
+                        if selectedImage != nil {
                             Button(action: { saveImage() }) {
                                 VStack {
                                     Image(systemName: "square.and.arrow.down")
@@ -125,7 +143,7 @@ struct PhotoEditorView: View {
                 .padding()
                 .background(Color(.systemBackground))
             }
-            .navigationTitle("Editor de Fotos")
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage)
             }
@@ -174,9 +192,8 @@ struct PhotoEditorView: View {
     }
     
     func saveImage() {
-        guard let image = selectedImage else { return }
-        let filteredImage = currentFilter.apply(to: image)
-        let finalImage = createImageWithTexts(from: filteredImage)
+        guard let image = displayImage else { return }
+        let finalImage = createImageWithTexts(from: image)
         UIImageWriteToSavedPhotosAlbum(finalImage, nil, nil, nil)
     }
     

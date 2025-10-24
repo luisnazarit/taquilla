@@ -75,6 +75,28 @@ struct FontMenuView: View {
       backgroundOpacity: 0,
       cornerRadius: 0
     ),
+    // Ari Display - Fuente moderna y limpia
+    FontStyle(
+      name: "Ari Display",
+      size: 34,
+      weight: .regular,
+      color: .white,
+      customFontName: "Ari-W9500Display",
+      shadows: [],
+      backgroundOpacity: 0,
+      cornerRadius: 0
+    ),
+    // Ari Bold - Fuente moderna en negrita
+    FontStyle(
+      name: "Ari Bold",
+      size: 34,
+      weight: .bold,
+      color: .white,
+      customFontName: "Ari-W9500Bold",
+      shadows: [],
+      backgroundOpacity: 0,
+      cornerRadius: 0
+    ),
   ]
   
   var body: some View {

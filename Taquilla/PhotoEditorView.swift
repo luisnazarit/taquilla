@@ -602,10 +602,15 @@ struct PhotoEditorView: View {
   func loadWeatherData() async {
     // Por ahora, vamos a usar datos de ejemplo
     // En la próxima iteración integraremos una API real de clima
+    
+    // Ejemplos para probar:
+    // temperature: "28°C"  → 😎 (soleado, >= 25°C)
+    // temperature: "8°C"   → 🥶 (frío, <= 10°C)
+    // temperature: "18°C"  → 🌤️ (normal, entre 11-24°C)
+    
     let exampleWeather = WeatherOverlay(
       temperature: "22°C",
-      location: "Santiago, Chile",
-      weatherIcon: "sun.max.fill"
+      location: "Santiago, Chile"
     )
     
     await MainActor.run {

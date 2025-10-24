@@ -10,11 +10,27 @@
 		</data>
 		<key>Info.plist</key>
 		<data>
-		I9p22BhLbYp7HaMzEtP0Cxe6y70=
+		ZElCEgbVG4S3ubVOzKrmEXnHDLI=
 		</data>
 		<key>PkgInfo</key>
 		<data>
 		n57qDP4tZfLD1rCS43W0B4LQjzE=
+		</data>
+		<key>Retrock.ttf</key>
+		<data>
+		mu0QFXApnLu19rXHhEP38/THJP0=
+		</data>
+		<key>Returns.ttf</key>
+		<data>
+		ZqvRvt26xCPR17xfdeP0ISdwUmA=
+		</data>
+		<key>dogicapixel.otf</key>
+		<data>
+		eA6fd7IZ9HkKhFGAoB1HEVFlWXs=
+		</data>
+		<key>dogicapixelbold.otf</key>
+		<data>
+		j3Q2GNYuf56130+bLQE9whaxc7k=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -24,6 +40,34 @@
 			<key>hash2</key>
 			<data>
 			gEm/8Y7HAh40NAGavo/oa8U4t9ydK7M6dgHxis5Qe9E=
+			</data>
+		</dict>
+		<key>Retrock.ttf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6i7PNjaAEXsk2eEYvaUGhnfJv8M1nVJ0l3Zr6N3oIh8=
+			</data>
+		</dict>
+		<key>Returns.ttf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			nRuEiJCZukkAFfDFjyA7wsDeajYc4nsMLtZdW8z2TNc=
+			</data>
+		</dict>
+		<key>dogicapixel.otf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			QSCbP7W+EfakDJx0w7dp9gib7l8wR9H0dafUAoH6teA=
+			</data>
+		</dict>
+		<key>dogicapixelbold.otf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			q7244owxKMprju93K23GFDRlmRbAVla2+2ovTiMMJwg=
 			</data>
 		</dict>
 	</dict>

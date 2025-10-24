@@ -10,6 +10,7 @@ struct TextElement: Identifiable {
     var fontWeight: Font.Weight
     var color: Color
     var scale: CGFloat = 1.0
+    var customFontName: String? = nil
 }
 
 // MARK: - Curved Text Element Model

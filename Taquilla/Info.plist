@@ -8,6 +8,13 @@
 	<string>Esta aplicación necesita acceso a la cámara para que puedas tomar fotos y editarlas.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Esta aplicación necesita permiso para guardar las fotos editadas en tu galería.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>dogicapixel.otf</string>
+		<string>dogicapixelbold.otf</string>
+		<string>Retrock.ttf</string>
+		<string>Returns.ttf</string>
+	</array>
 </dict>
 </plist>
 

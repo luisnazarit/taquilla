@@ -6,160 +6,160 @@
         "comment": "",
         "key": "Selecciona una foto para editar",
         "location": {
-          "startingColumn": 34,
-          "startingLine": 129
+          "startingColumn": 20,
+          "startingLine": 135
         }
       },
       {
         "comment": "",
         "key": "Foto",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 143
+          "startingColumn": 22,
+          "startingLine": 149
         }
       },
       {
         "comment": "",
         "key": "Texto",
         "location": {
-          "startingColumn": 42,
-          "startingLine": 154
+          "startingColumn": 24,
+          "startingLine": 160
         }
       },
       {
         "comment": "",
         "key": "Curvo",
         "location": {
-          "startingColumn": 42,
-          "startingLine": 168
+          "startingColumn": 24,
+          "startingLine": 174
         }
       },
       {
         "comment": "",
         "key": "Filtros",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 178
+          "startingColumn": 24,
+          "startingLine": 184
         }
       },
       {
         "comment": "",
         "key": "Guardar",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 190
+          "startingColumn": 24,
+          "startingLine": 196
         }
       },
       {
         "comment": "",
         "key": "Agregar Texto",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 563
+          "startingColumn": 24,
+          "startingLine": 587
         }
       },
       {
         "comment": "",
         "key": "%lld caracteres restantes",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 554
+          "startingColumn": 14,
+          "startingLine": 578
         }
       },
       {
         "comment": "",
         "key": "Escribe tu texto aquí",
         "location": {
-          "startingColumn": 27,
-          "startingLine": 542
+          "startingColumn": 19,
+          "startingLine": 564
         }
       },
       {
         "comment": "",
         "key": "Cancelar",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 567
+          "startingColumn": 18,
+          "startingLine": 591
         }
       },
       {
         "comment": "",
         "key": "Listo",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 573
+          "startingColumn": 18,
+          "startingLine": 597
         }
       },
       {
         "comment": "",
         "key": "Tipos de Letra",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 643
+          "startingColumn": 24,
+          "startingLine": 672
         }
       },
       {
         "comment": "",
         "key": "Elige un estilo de texto",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 611
+          "startingColumn": 14,
+          "startingLine": 638
         }
       },
       {
         "comment": "",
         "key": "Aa",
         "location": {
-          "startingColumn": 38,
-          "startingLine": 622
+          "startingColumn": 22,
+          "startingLine": 649
         }
       },
       {
         "comment": "",
         "key": "Cerrar",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 647
+          "startingColumn": 18,
+          "startingLine": 676
         }
       },
       {
         "comment": "",
         "key": "Texto Curvo",
         "location": {
-          "startingColumn": 30,
-          "startingLine": 921
+          "startingColumn": 24,
+          "startingLine": 953
         }
       },
       {
         "comment": "",
         "key": "%lld caracteres restantes",
         "location": {
-          "startingColumn": 22,
-          "startingLine": 912
+          "startingColumn": 14,
+          "startingLine": 944
         }
       },
       {
         "comment": "",
         "key": "Escribe tu texto aquí",
         "location": {
-          "startingColumn": 27,
-          "startingLine": 900
+          "startingColumn": 19,
+          "startingLine": 932
         }
       },
       {
         "comment": "",
         "key": "Cancelar",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 925
+          "startingColumn": 18,
+          "startingLine": 957
         }
       },
       {
         "comment": "",
         "key": "Listo",
         "location": {
-          "startingColumn": 28,
-          "startingLine": 931
+          "startingColumn": 18,
+          "startingLine": 963
         }
       }
     ]

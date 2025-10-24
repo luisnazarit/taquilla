@@ -18,6 +18,10 @@
 		A1234567890123456789012Q /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012R /* GalleryView.swift */; };
 		A1234567890123456789012S /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012T /* Assets.xcassets */; };
 		A1234567890123456789012U /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012V /* Preview Assets.xcassets */; };
+		C089BC7595AE4B4AB79A4C35 /* dogicapixel.otf in Resources */ = {isa = PBXBuildFile; fileRef = 36524D2D9006496D8F66ECAD /* dogicapixel.otf */; };
+		40D88F39A87646709F9D2882 /* dogicapixelbold.otf in Resources */ = {isa = PBXBuildFile; fileRef = B3DCD088889D438EB72D3DD5 /* dogicapixelbold.otf */; };
+		9E696578603546F6A51F992E /* Retrock.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0AE971CAB44940BCB1EBE60E /* Retrock.ttf */; };
+		C7194DAE43DF44BBAA900E87 /* Returns.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 07E607A25647417B984A7D76 /* Returns.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +38,10 @@
 		A1234567890123456789012V /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1234567890123456789012W /* Taquilla.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Taquilla.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1234567890123456789012X /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		36524D2D9006496D8F66ECAD /* dogicapixel.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/dogicapixel.otf; sourceTree = "<group>"; };
+		B3DCD088889D438EB72D3DD5 /* dogicapixelbold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/dogicapixelbold.otf; sourceTree = "<group>"; };
+		0AE971CAB44940BCB1EBE60E /* Retrock.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/Retrock.ttf; sourceTree = "<group>"; };
+		07E607A25647417B984A7D76 /* Returns.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/Returns.ttf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +94,10 @@
 				A1234567890123456789012T /* Assets.xcassets */,
 				A1234567890123456789012X /* Info.plist */,
 				A1234567890123456789012AA /* Preview Content */,
+				36524D2D9006496D8F66ECAD /* dogicapixel.otf */,
+				B3DCD088889D438EB72D3DD5 /* dogicapixelbold.otf */,
+				0AE971CAB44940BCB1EBE60E /* Retrock.ttf */,
+				07E607A25647417B984A7D76 /* Returns.ttf */,
 			);
 			path = Taquilla;
 			sourceTree = "<group>";
@@ -150,6 +162,10 @@
 			files = (
 				A1234567890123456789012U /* Preview Assets.xcassets in Resources */,
 				A1234567890123456789012S /* Assets.xcassets in Resources */,
+				C089BC7595AE4B4AB79A4C35 /* dogicapixel.otf in Resources */,
+				40D88F39A87646709F9D2882 /* dogicapixelbold.otf in Resources */,
+				9E696578603546F6A51F992E /* Retrock.ttf in Resources */,
+				C7194DAE43DF44BBAA900E87 /* Returns.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

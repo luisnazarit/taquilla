@@ -1,0 +1,32 @@
+{
+  "source": "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/CollageView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Collage",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Crear Collage",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Esta funcionalidad estará disponible próximamente",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 16
+        }
+      }
+    ]
+  },
+  "version": 1
+}

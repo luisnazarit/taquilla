@@ -1,0 +1,109 @@
+{
+  "" : {
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Taquilla-primary.dia",
+    "emit-module-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Taquilla-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Taquilla-primary-emit-module.dia",
+    "pch" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Taquilla-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Taquilla-primary.swiftdeps"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/CollageView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/CollageView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/ContentView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/FilterPreviewView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/FilterPreviewView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/GalleryView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GalleryView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/ImagePicker.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/ImagePicker~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/Models.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/Models~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/PhotoEditorView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/PhotoEditorView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/TaquillaApp.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TaquillaApp~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/TextEditorView.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/TextEditorView~partial.swiftmodule"
+  },
+  "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/luisnazarit/APPS/taquilla-swift/build/Taquilla.build/Debug-iphonesimulator/Taquilla.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

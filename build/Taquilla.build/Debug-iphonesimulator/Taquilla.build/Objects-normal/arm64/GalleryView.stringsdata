@@ -1,0 +1,32 @@
+{
+  "source": "/Users/luisnazarit/APPS/taquilla-swift/Taquilla/GalleryView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Galería",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "Galería",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 11
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tus fotos editadas aparecerán aquí",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 16
+        }
+      }
+    ]
+  },
+  "version": 1
+}

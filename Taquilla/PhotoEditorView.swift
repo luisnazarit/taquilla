@@ -22,6 +22,7 @@ struct PhotoEditorView: View {
     @State private var showingCurvedTextEditor = false
     @State private var editingCurvedText = ""
     @State private var currentDrawnPath: [CGPoint] = []
+    @State private var selectedCurvedTextIndex: Int? = nil
     
     // Imagen con filtro aplicado
     private var displayImage: UIImage? {
@@ -75,12 +76,34 @@ struct PhotoEditorView: View {
                                         )
                                     }
                                     
-                                    // Textos curvos
-                                    ForEach(curvedTextElements) { curvedText in
-                                        CurvedTextView(curvedText: curvedText) {
-                                            // TODO: Editar texto curvo
-                                        }
-                                    }
+                    // Textos curvos
+                    ForEach(curvedTextElements) { curvedText in
+                        CurvedTextView(
+                            curvedText: curvedText,
+                            onDrag: { translation in
+                                if let index = curvedTextElements.firstIndex(where: { $0.id == curvedText.id }) {
+                                    curvedTextElements[index].offset.width += translation.width
+                                    curvedTextElements[index].offset.height += translation.height
+                                }
+                            },
+                            onScale: { scale in
+                                if let index = curvedTextElements.firstIndex(where: { $0.id == curvedText.id }) {
+                                    let newScale = curvedText.scale * scale
+                                    curvedTextElements[index].scale = min(max(newScale, 0.3), 4.0)
+                                }
+                            },
+                            onTap: {
+                                // Editar texto curvo existente
+                                if let index = curvedTextElements.firstIndex(where: { $0.id == curvedText.id }) {
+                                    editingCurvedText = curvedText.text
+                                    currentDrawnPath = curvedText.path
+                                    showingCurvedTextEditor = true
+                                    // Guardamos el índice para actualizar después
+                                    selectedCurvedTextIndex = index
+                                }
+                            }
+                        )
+                    }
                                     
                                     // Canvas para dibujar cuando está en modo dibujo
                                     if isDrawingMode {
@@ -90,9 +113,11 @@ struct PhotoEditorView: View {
                                             onFinish: { path in
                                                 currentDrawnPath = path
                                                 isDrawingMode = false
+                                                selectedCurvedTextIndex = nil // Nuevo texto
                                                 showingCurvedTextEditor = true
                                             }
                                         )
+                                        .allowsHitTesting(true) // Solo capturar toques cuando está activo
                                     }
                                         }
                                 )
@@ -247,19 +272,27 @@ struct PhotoEditorView: View {
                                 pathLength: pathLength
                             )
                             
-                            let newCurvedText = CurvedTextElement(
-                                text: editingCurvedText,
-                                path: currentDrawnPath,
-                                fontSize: optimalFontSize,
-                                fontWeight: .semibold,
-                                color: .white
-                            )
-                            curvedTextElements.append(newCurvedText)
+                            if let index = selectedCurvedTextIndex {
+                                // Editar texto curvo existente
+                                curvedTextElements[index].text = editingCurvedText
+                                // Mantener el mismo path, fontSize, etc.
+                            } else {
+                                // Crear nuevo texto curvo
+                                let newCurvedText = CurvedTextElement(
+                                    text: editingCurvedText,
+                                    path: currentDrawnPath,
+                                    fontSize: optimalFontSize,
+                                    fontWeight: .semibold,
+                                    color: .white
+                                )
+                                curvedTextElements.append(newCurvedText)
+                            }
                         }
                         editingCurvedText = ""
                         currentDrawnPath = []
                         currentDrawingPath = []
                         drawingMode = .none
+                        selectedCurvedTextIndex = nil
                         showingCurvedTextEditor = false
                     },
                     onCancel: {
@@ -267,6 +300,7 @@ struct PhotoEditorView: View {
                         currentDrawnPath = []
                         currentDrawingPath = []
                         drawingMode = .none
+                        selectedCurvedTextIndex = nil
                         showingCurvedTextEditor = false
                     }
                 )
@@ -317,7 +351,9 @@ struct PhotoEditorView: View {
         guard pathLength > 0 else { return }
         
         let uiFontWeight = convertToUIFontWeight(curvedText.fontWeight)
-        let font = UIFont.systemFont(ofSize: curvedText.fontSize, weight: uiFontWeight)
+        // Aplicar la escala al fontSize
+        let scaledFontSize = curvedText.fontSize * curvedText.scale
+        let font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
         let characters = Array(curvedText.text)
         let textCount = CGFloat(characters.count)
         guard textCount > 0 else { return }
@@ -326,6 +362,9 @@ struct PhotoEditorView: View {
         let spacing = pathLength / textCount
         
         context.saveGState()
+        
+        // Aplicar el offset (traslación)
+        context.translateBy(x: curvedText.offset.width, y: curvedText.offset.height)
         
         for (index, character) in characters.enumerated() {
             let distance = spacing * CGFloat(index) + (spacing / 2)
@@ -618,67 +657,87 @@ struct FontMenuView: View {
 
 struct CurvedTextView: View {
     let curvedText: CurvedTextElement
+    let onDrag: (CGSize) -> Void
+    let onScale: (CGFloat) -> Void
     let onTap: () -> Void
+    
+    @State private var lastDragPosition: CGSize = .zero
+    @State private var currentMagnification: CGFloat = 1.0
     
     var body: some View {
         ZStack {
-            // DEBUG: Mostrar la línea siempre
-            Path { path in
-                guard curvedText.path.count > 0 else { return }
-                path.move(to: curvedText.path[0])
-                for point in curvedText.path.dropFirst() {
-                    path.addLine(to: point)
-                }
-            }
-            .stroke(Color.red.opacity(0.7), lineWidth: 3)
-            
-            // DEBUG: Mostrar todos los puntos del path
-            ForEach(Array(curvedText.path.enumerated()), id: \.offset) { index, point in
-                Circle()
-                    .fill(Color.blue.opacity(0.3))
-                    .frame(width: 4, height: 4)
-                    .position(point)
-            }
-            
-            // Puntos de inicio y fin
-            if let first = curvedText.path.first {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 10, height: 10)
-                    .position(first)
-            }
-            
-            if let last = curvedText.path.last {
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 10, height: 10)
-                    .position(last)
-            }
-            
-            // Renderizar cada letra siguiendo el path
+            // Renderizar cada letra siguiendo el path con escala y offset aplicados
             ForEach(Array(curvedText.text.enumerated()), id: \.offset) { index, character in
                 if let letterInfo = calculateLetterPosition(for: index) {
-                    ZStack {
-                        // DEBUG: Mostrar punto donde va cada letra
-                        Circle()
-                            .fill(Color.yellow)
-                            .frame(width: 6, height: 6)
-                            .position(letterInfo.point)
-                        
-                        // Usar el ángulo de la tangente directamente para que las letras estén "de pie"
-                        Text(String(character))
-                            .font(.system(size: curvedText.fontSize, weight: curvedText.fontWeight))
-                            .foregroundColor(curvedText.color)
-                            .rotationEffect(Angle(radians: Double(letterInfo.angle)), anchor: .center)
-                            .position(letterInfo.point)
-                    }
+                    Text(String(character))
+                        .font(.system(size: curvedText.fontSize * curvedText.scale, weight: curvedText.fontWeight))
+                        .foregroundColor(curvedText.color)
+                        .rotationEffect(Angle(radians: Double(letterInfo.angle)), anchor: .center)
+                        .position(
+                            x: letterInfo.point.x + curvedText.offset.width,
+                            y: letterInfo.point.y + curvedText.offset.height
+                        )
                 }
             }
         }
-        .contentShape(Rectangle())
+        .gesture(
+            SimultaneousGesture(
+                DragGesture()
+                    .onChanged { value in
+                        let translation = CGSize(
+                            width: value.translation.width - lastDragPosition.width,
+                            height: value.translation.height - lastDragPosition.height
+                        )
+                        lastDragPosition = value.translation
+                        onDrag(translation)
+                    }
+                    .onEnded { _ in
+                        lastDragPosition = .zero
+                    },
+                MagnificationGesture()
+                    .onChanged { value in
+                        let sensitivity: CGFloat = 0.2
+                        let delta = (value - currentMagnification) * sensitivity
+                        currentMagnification = value
+                        
+                        let newScale = curvedText.scale + delta
+                        onScale(newScale / curvedText.scale)
+                    }
+                    .onEnded { _ in
+                        currentMagnification = 1.0
+                    }
+            )
+        )
         .onTapGesture {
             onTap()
         }
+    }
+    
+    private func calculateBounds() -> CGRect {
+        guard !curvedText.path.isEmpty else {
+            return CGRect(x: 0, y: 0, width: 100, height: 100)
+        }
+        
+        var minX = curvedText.path[0].x
+        var maxX = curvedText.path[0].x
+        var minY = curvedText.path[0].y
+        var maxY = curvedText.path[0].y
+        
+        for point in curvedText.path {
+            minX = min(minX, point.x)
+            maxX = max(maxX, point.x)
+            minY = min(minY, point.y)
+            maxY = max(maxY, point.y)
+        }
+        
+        // Agregar padding para el tamaño del texto
+        let padding = curvedText.fontSize * 2
+        return CGRect(
+            x: minX - padding,
+            y: minY - padding,
+            width: (maxX - minX) + padding * 2,
+            height: (maxY - minY) + padding * 2
+        )
     }
     
     private func calculateLetterPosition(for index: Int) -> (point: CGPoint, angle: CGFloat)? {

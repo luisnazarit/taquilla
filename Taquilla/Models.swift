@@ -20,6 +20,13 @@ struct CurvedTextElement: Identifiable {
     var fontSize: CGFloat
     var fontWeight: Font.Weight
     var color: Color
+    var scale: CGFloat = 1.0
+    var offset: CGSize = .zero
+    
+    // Hacer mutable el struct completo
+    mutating func updateText(_ newText: String) {
+        self.text = newText
+    }
 }
 
 // MARK: - Drawing State

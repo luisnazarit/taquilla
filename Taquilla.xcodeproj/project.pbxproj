@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		78D4ACD8E12440ADA01ADAF0 /* TextElementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B32F86BD82843E69F1F5CB2 /* TextElementView.swift */; };
+		9957306BC2E44153AA64FEF5 /* FontMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C85DC75926445B8BBB6590 /* FontMenuView.swift */; };
+		E6824D5A511F42B69459371B /* TextInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C013C327B444CAE80277007 /* TextInputView.swift */; };
+		C8D4A281001D41A5AAFBEE45 /* CurvedTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C9AA56E82EF4CCCBDA672AB /* CurvedTextView.swift */; };
+		EA7ABA1463A44BBEABA2F39D /* CurvedTextInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D0AFC3C5FE4D139B656818 /* CurvedTextInputView.swift */; };
+		6EF8A8C6D72F4630B588B32A /* DrawingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD761B6F4E204D1F99A9AE1C /* DrawingCanvasView.swift */; };
+		2CD831903D6B448DA8211EC1 /* WeatherOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */; };
 		A1234567890123456789012A /* TaquillaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012B /* TaquillaApp.swift */; };
 		A1234567890123456789012C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012D /* ContentView.swift */; };
 		A1234567890123456789012E /* PhotoEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012F /* PhotoEditorView.swift */; };
@@ -25,6 +32,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1B32F86BD82843E69F1F5CB2 /* TextElementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextElementView.swift; sourceTree = "<group>"; };
+		42C85DC75926445B8BBB6590 /* FontMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontMenuView.swift; sourceTree = "<group>"; };
+		4C013C327B444CAE80277007 /* TextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextInputView.swift; sourceTree = "<group>"; };
+		3C9AA56E82EF4CCCBDA672AB /* CurvedTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurvedTextView.swift; sourceTree = "<group>"; };
+		93D0AFC3C5FE4D139B656818 /* CurvedTextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurvedTextInputView.swift; sourceTree = "<group>"; };
+		FD761B6F4E204D1F99A9AE1C /* DrawingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvasView.swift; sourceTree = "<group>"; };
+		7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherOverlayView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012B /* TaquillaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaquillaApp.swift; sourceTree = "<group>"; };
 		A1234567890123456789012D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012F /* PhotoEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEditorView.swift; sourceTree = "<group>"; };
@@ -98,8 +112,24 @@
 				B3DCD088889D438EB72D3DD5 /* dogicapixelbold.otf */,
 				0AE971CAB44940BCB1EBE60E /* Retrock.ttf */,
 				07E607A25647417B984A7D76 /* Returns.ttf */,
+				DCAC6E4AD5EB47B189029FA8 /* Views */,
 			);
 			path = Taquilla;
+			sourceTree = "<group>";
+		};
+
+		DCAC6E4AD5EB47B189029FA8 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1B32F86BD82843E69F1F5CB2 /* TextElementView.swift */,
+				42C85DC75926445B8BBB6590 /* FontMenuView.swift */,
+				4C013C327B444CAE80277007 /* TextInputView.swift */,
+				3C9AA56E82EF4CCCBDA672AB /* CurvedTextView.swift */,
+				93D0AFC3C5FE4D139B656818 /* CurvedTextInputView.swift */,
+				FD761B6F4E204D1F99A9AE1C /* DrawingCanvasView.swift */,
+				7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -185,6 +215,13 @@
 				A1234567890123456789012O /* CollageView.swift in Sources */,
 				A1234567890123456789012Q /* GalleryView.swift in Sources */,
 				A1234567890123456789012A /* TaquillaApp.swift in Sources */,
+				78D4ACD8E12440ADA01ADAF0 /* TextElementView.swift in Sources */,
+				9957306BC2E44153AA64FEF5 /* FontMenuView.swift in Sources */,
+				E6824D5A511F42B69459371B /* TextInputView.swift in Sources */,
+				C8D4A281001D41A5AAFBEE45 /* CurvedTextView.swift in Sources */,
+				EA7ABA1463A44BBEABA2F39D /* CurvedTextInputView.swift in Sources */,
+				6EF8A8C6D72F4630B588B32A /* DrawingCanvasView.swift in Sources */,
+				2CD831903D6B448DA8211EC1 /* WeatherOverlayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -42,6 +42,7 @@ struct FilterPreviewView: View {
         case .cool: return "snowflake"
         case .warm: return "flame"
         case .dramatic: return "bolt"
+        case .gritty: return "cube"
         }
     }
 }

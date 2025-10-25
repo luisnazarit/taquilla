@@ -205,39 +205,7 @@ struct PhotoEditorView: View {
               )
             }
           } else {
-            // Zona cliqueable con logo para seleccionar foto
-            Button(action: { showingImagePicker = true }) {
-              VStack(spacing: 20) {
-                Spacer()
-                
-                Image("Logo")
-                  .resizable()
-                  .scaledToFit()
-                  .frame(width: 200) // Limitar ancho máximo
-                  .padding(.horizontal, 40) // Espaciado de los bordes
-                
-                Image(systemName: "photo.badge.plus")
-                  .font(.system(size: 50))
-                  .foregroundColor(.white.opacity(0.6))
-                
-                Text("Toca para seleccionar una foto")
-                  .font(.headline)
-                  .foregroundColor(.white.opacity(0.6))
-                
-                Spacer()
-                
-                // Texto informativo
-                Text("Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con ❤️")
-                  .font(.caption)
-                  .foregroundColor(.white.opacity(0.4))
-                  .multilineTextAlignment(.center)
-                  .padding(.horizontal, 30)
-                  .padding(.bottom, 40)
-              }
-              .frame(maxWidth: .infinity, maxHeight: .infinity)
-              .contentShape(Rectangle())
-            }
-            .buttonStyle(PlainButtonStyle())
+            emptyStateView
                     }
                 }
                 .frame(maxHeight: .infinity)
@@ -329,11 +297,11 @@ struct PhotoEditorView: View {
                     .frame(width: 80, height: 80)
                     .background(Color.gray.opacity(0.2))
                     .cornerRadius(12)
-                  }
-                }
-                .padding(.horizontal)
-              }
-            }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
                 }
                 .padding()
                 .background(Color(.systemBackground))
@@ -474,11 +442,52 @@ struct PhotoEditorView: View {
             }
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .animation(.spring(), value: showingSaveSuccess)
-                            }
-                        }
-                    )
-                }
-            }
+          }
+        }
+      )
+    }
+  }
+  
+  // Vista de estado vacío (sin imagen)
+  private var emptyStateView: some View {
+    Button(action: { showingImagePicker = true }) {
+      VStack(spacing: 10) {
+        Spacer()
+        
+        Image("Logo")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 180)
+          .padding(.horizontal, 40)
+          .padding(.bottom, 40)
+        
+        Image(systemName: "plus.circle")
+          .font(.system(size: 50))
+          .foregroundColor(Color(red: 1.0, green: 0.0, blue: 1.0))
+        
+        Text("Seleccionar una foto")
+          .font(.headline)
+          .foregroundColor(.white.opacity(0.7))
+          .padding(.bottom, 5)
+
+        Text("Elige tu foto más taquillera")
+          .font(.caption)
+          .foregroundColor(.white.opacity(0.5))
+        
+        Spacer()
+        
+        Text("Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con <3")
+          .font(.caption)
+          .foregroundColor(.white.opacity(0.4))
+          .multilineTextAlignment(.center)
+          .padding(.horizontal, 30)
+          .padding(.bottom, 40)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(PlainButtonStyle())
+  }
 
   func saveImage() {
     guard let image = displayImage else { return }

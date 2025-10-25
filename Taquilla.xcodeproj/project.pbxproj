@@ -31,6 +31,7 @@
 		C7194DAE43DF44BBAA900E87 /* Returns.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 07E607A25647417B984A7D76 /* Returns.ttf */; };
 		11AB037DB7D44C028A2217D0 /* ari-w9500-display.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 06821D9BD3E94B7397DBABAE /* ari-w9500-display.ttf */; };
 		8A94EB594B044C9DAA2300DF /* ari-w9500-bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A5FE5AC416524A6D9F5CE07E /* ari-w9500-bold.ttf */; };
+		A51DE76326DC4E83870BE08B /* 02_Canon LUTs_Gritty.cube in Resources */ = {isa = PBXBuildFile; fileRef = A027DA6390BF4842B168BAA6 /* 02_Canon LUTs_Gritty.cube */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +61,7 @@
 		07E607A25647417B984A7D76 /* Returns.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/Returns.ttf; sourceTree = "<group>"; };
 		06821D9BD3E94B7397DBABAE /* ari-w9500-display.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ari-w9500-display.ttf; sourceTree = "<group>"; };
 		A5FE5AC416524A6D9F5CE07E /* ari-w9500-bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Resources/ari-w9500-bold.ttf; sourceTree = "<group>"; };
+		A027DA6390BF4842B168BAA6 /* 02_Canon LUTs_Gritty.cube */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Resources/02_Canon LUTs_Gritty/02_Canon LUTs_Gritty.cube"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 				07E607A25647417B984A7D76 /* Returns.ttf */,
 				A5FE5AC416524A6D9F5CE07E /* ari-w9500-bold.ttf */,
 				06821D9BD3E94B7397DBABAE /* ari-w9500-display.ttf */,
+				A027DA6390BF4842B168BAA6 /* 02_Canon LUTs_Gritty.cube */,
 				DCAC6E4AD5EB47B189029FA8 /* Views */,
 			);
 			path = Taquilla;
@@ -204,6 +207,7 @@
 				C7194DAE43DF44BBAA900E87 /* Returns.ttf in Resources */,
 				11AB037DB7D44C028A2217D0 /* ari-w9500-display.ttf in Resources */,
 				8A94EB594B044C9DAA2300DF /* ari-w9500-bold.ttf in Resources */,
+				A51DE76326DC4E83870BE08B /* 02_Canon LUTs_Gritty.cube in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

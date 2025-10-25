@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreImage
+import UIKit
 
 // MARK: - Text Element Model
 struct TextElement: Identifiable {
@@ -172,6 +173,7 @@ enum PhotoFilter: CaseIterable {
     case cool
     case warm
     case dramatic
+    case gritty  // LUT Canon Gritty
     
     var name: String {
         switch self {
@@ -183,6 +185,7 @@ enum PhotoFilter: CaseIterable {
         case .cool: return "Cool"
         case .warm: return "Warm"
         case .dramatic: return "Dramatic"
+        case .gritty: return "Gritty"
         }
     }
     
@@ -196,6 +199,7 @@ enum PhotoFilter: CaseIterable {
         case .cool: return .cyan.opacity(0.3)
         case .warm: return .red.opacity(0.3)
         case .dramatic: return .purple.opacity(0.3)
+        case .gritty: return .green.opacity(0.3)
         }
     }
     
@@ -275,6 +279,9 @@ enum PhotoFilter: CaseIterable {
                     outputImage = output
                 }
             }
+        case .gritty:
+            // Aplicar LUT Canon Gritty
+            return LUTFilter.applyLUT(to: image, lutFileName: "02_Canon LUTs_Gritty") ?? image
         }
         
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
@@ -283,5 +290,122 @@ enum PhotoFilter: CaseIterable {
         
         // Preservar la orientación original de la imagen
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+    }
+}
+
+// MARK: - LUT Filter Helper
+class LUTFilter {
+    static func applyLUT(to image: UIImage, lutFileName: String) -> UIImage? {
+        // Intentar encontrar el archivo LUT en diferentes ubicaciones
+        var lutURL: URL?
+        
+        // Opción 1: Buscar en el bundle directamente
+        lutURL = Bundle.main.url(forResource: lutFileName, withExtension: "cube")
+        
+        // Opción 2: Buscar en subdirectorio
+        if lutURL == nil {
+            lutURL = Bundle.main.url(forResource: lutFileName, withExtension: "cube", subdirectory: "Resources/02_Canon LUTs_Gritty")
+        }
+        
+        // Opción 3: Buscar recursivamente en el bundle
+        if lutURL == nil {
+            if let bundlePath = Bundle.main.resourcePath {
+                let fileManager = FileManager.default
+                if let enumerator = fileManager.enumerator(atPath: bundlePath) {
+                    for case let file as String in enumerator {
+                        if file.contains(lutFileName) && file.hasSuffix(".cube") {
+                            lutURL = URL(fileURLWithPath: bundlePath).appendingPathComponent(file)
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        
+        guard let url = lutURL,
+              let lutData = try? String(contentsOf: url) else {
+            print("❌ No se pudo cargar el archivo LUT: \(lutFileName)")
+            print("📁 Bundle path: \(Bundle.main.resourcePath ?? "unknown")")
+            return nil
+        }
+        
+        print("✅ LUT encontrado en: \(url.path)")
+        
+        guard let cubeData = parseCubeLUT(lutData) else {
+            print("❌ No se pudo parsear el archivo LUT")
+            return nil
+        }
+        
+        print("✅ LUT parseado: dimensión \(cubeData.dimension), \(cubeData.data.count) bytes de datos")
+        
+        guard let ciImage = CIImage(image: image) else { return image }
+        
+        // Crear el filtro ColorCube con los datos del LUT
+        guard let filter = CIFilter(name: "CIColorCube") else { return image }
+        
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        filter.setValue(cubeData.dimension, forKey: "inputCubeDimension")
+        filter.setValue(cubeData.data, forKey: "inputCubeData")
+        
+        guard let outputImage = filter.outputImage else { return image }
+        
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return image
+        }
+        
+        return UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+    }
+    
+    private static func parseCubeLUT(_ lutString: String) -> (data: Data, dimension: Int)? {
+        let lines = lutString.components(separatedBy: .newlines)
+        var dimension = 0
+        var lutData: [Float] = []
+        
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            
+            // Ignorar comentarios y líneas vacías
+            if trimmed.isEmpty || trimmed.hasPrefix("#") {
+                continue
+            }
+            
+            // Buscar el tamaño de la tabla LUT
+            if trimmed.hasPrefix("LUT_3D_SIZE") {
+                let components = trimmed.components(separatedBy: .whitespaces)
+                if components.count >= 2, let size = Int(components[1]) {
+                    dimension = size
+                }
+                continue
+            }
+            
+            // Parsear los valores RGB
+            let values = trimmed.components(separatedBy: .whitespaces)
+            if values.count >= 3 {
+                if let r = Float(values[0]),
+                   let g = Float(values[1]),
+                   let b = Float(values[2]) {
+                    // CIColorCube espera valores RGBA
+                    lutData.append(r)
+                    lutData.append(g)
+                    lutData.append(b)
+                    lutData.append(1.0) // Alpha
+                }
+            }
+        }
+        
+        guard dimension > 0 && !lutData.isEmpty else {
+            print("❌ LUT vacío o inválido")
+            return nil
+        }
+        
+        // Verificar que tengamos el número correcto de valores
+        let expectedCount = dimension * dimension * dimension * 4 // RGBA
+        if lutData.count != expectedCount {
+            print("⚠️ LUT tiene \(lutData.count) valores, se esperaban \(expectedCount)")
+        }
+        
+        let data = Data(bytes: lutData, count: lutData.count * MemoryLayout<Float>.size)
+        return (data, dimension)
     }
 }

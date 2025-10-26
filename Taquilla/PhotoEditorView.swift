@@ -262,7 +262,7 @@ struct PhotoEditorView: View {
 
               if showingFilterPicker {
                 ScrollView(.horizontal, showsIndicators: false) {
-                  HStack(spacing: 12) {
+                  HStack(spacing: 6) {
                     ForEach(PhotoFilter.allCases, id: \.self) { filter in
                       FilterPreviewView(
                         filter: filter,

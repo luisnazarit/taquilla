@@ -9,7 +9,7 @@ struct FilterPreviewView: View {
     VStack(spacing: 8) {
       // Vista previa del filtro
       RoundedRectangle(cornerRadius: 8)
-        .fill(filter.previewColor)
+        .fill(Color.clear) // Fondo transparente
         .frame(width: 50, height: 50)
         .overlay(
           RoundedRectangle(cornerRadius: 8)
@@ -21,6 +21,7 @@ struct FilterPreviewView: View {
             .font(.title2)
             .foregroundColor(.white)
         )
+        .padding(isSelected ? 2 : 0) // Padding adicional cuando está seleccionado para evitar que se corte el borde
 
       // Nombre del filtro
       Text(filter.name)

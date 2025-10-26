@@ -40,6 +40,7 @@ struct PhotoEditorView: View {
   @State private var showingTemplatePicker = false
   @State private var weatherOverlay: WeatherOverlay?
   @State private var locationOverlay: LocationOverlay?
+  @State private var isLoadingTemplate = false
 
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -281,13 +282,21 @@ struct PhotoEditorView: View {
                     // Plantilla: Clima y ubicación
                     Button(action: {
                       Task {
+                        isLoadingTemplate = true
                         await loadWeatherData()
+                        isLoadingTemplate = false
                       }
                     }) {
                       VStack(spacing: 4) {
-                        Image(systemName: "cloud.sun.fill")
-                          .font(.system(size: 32))
-                          .foregroundColor(.orange)
+                        if isLoadingTemplate {
+                          ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.orange)
+                        } else {
+                          Image(systemName: "cloud.sun.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.orange)
+                        }
                         Text("Clima y\nUbicación")
                           .font(.caption2)
                           .multilineTextAlignment(.center)
@@ -297,15 +306,23 @@ struct PhotoEditorView: View {
                       .background(Color.gray.opacity(0.2))
                       .cornerRadius(12)
                     }
+                    .disabled(isLoadingTemplate)
 
                     // Plantilla: Ubicación
                     Button(action: {
+                      isLoadingTemplate = true
                       loadLocationData()
                     }) {
                       VStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse")
-                          .font(.system(size: 32))
-                          .foregroundColor(.blue)
+                        if isLoadingTemplate {
+                          ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.blue)
+                        } else {
+                          Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: 32))
+                            .foregroundColor(.blue)
+                        }
                         Text("Ubicación")
                           .font(.caption2)
                           .multilineTextAlignment(.center)
@@ -315,6 +332,7 @@ struct PhotoEditorView: View {
                       .background(Color.gray.opacity(0.2))
                       .cornerRadius(12)
                     }
+                    .disabled(isLoadingTemplate)
                   }
                   .padding(.horizontal)
                 }
@@ -1112,6 +1130,7 @@ struct PhotoEditorView: View {
           DispatchQueue.main.async {
             self.locationOverlay = realLocation
             self.showingTemplatePicker = false
+            self.isLoadingTemplate = false
           }
 
         case .failure(let error):
@@ -1133,6 +1152,7 @@ struct PhotoEditorView: View {
           DispatchQueue.main.async {
             self.locationOverlay = fallbackLocation
             self.showingTemplatePicker = false
+            self.isLoadingTemplate = false
           }
         }
       }

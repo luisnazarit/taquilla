@@ -166,46 +166,50 @@ struct PathUtilities {
 // MARK: - Photo Filter Enum
 enum PhotoFilter: CaseIterable {
     case none
-    case vintage
-    case blackAndWhite
     case sepia
     case vivid
-    case cool
-    case warm
-    case dramatic
     case gritty  // LUT Canon Gritty
+    case kodak
+    case lut2    // LUT personalizado 2
     
     var name: String {
         switch self {
         case .none: return "Original"
-        case .vintage: return "Vintage"
-        case .blackAndWhite: return "B&W"
         case .sepia: return "Sepia"
         case .vivid: return "Vivid"
-        case .cool: return "Cool"
-        case .warm: return "Warm"
-        case .dramatic: return "Dramatic"
         case .gritty: return "Gritty"
+        case .kodak: return "Kodak"
+        case .lut2: return "LUT2"
         }
     }
     
     var previewColor: Color {
         switch self {
         case .none: return .clear
-        case .vintage: return .brown.opacity(0.3)
-        case .blackAndWhite: return .gray.opacity(0.5)
         case .sepia: return .orange.opacity(0.3)
         case .vivid: return .blue.opacity(0.3)
-        case .cool: return .cyan.opacity(0.3)
-        case .warm: return .red.opacity(0.3)
-        case .dramatic: return .purple.opacity(0.3)
         case .gritty: return .green.opacity(0.3)
+        case .kodak: return .yellow.opacity(0.3)
+        case .lut2: return .purple.opacity(0.3)
         }
     }
     
     func apply(to image: UIImage) -> UIImage {
         guard self != .none else { return image }
         
+        // Para filtros LUT, usar la función especializada
+        switch self {
+        case .gritty:
+            return LUTFilter.applyLUT(to: image, lutFileName: "02_Canon LUTs_Gritty") ?? image
+        case .kodak:
+            return LUTFilter.applyLUT(to: image, lutFileName: "kodak") ?? image
+        case .lut2:
+            return LUTFilter.applyLUT(to: image, lutFileName: "lut2") ?? image
+        default:
+            break
+        }
+        
+        // Para filtros Core Image normales
         guard let ciImage = CIImage(image: image) else { return image }
         let context = CIContext()
         
@@ -214,26 +218,6 @@ enum PhotoFilter: CaseIterable {
         switch self {
         case .none:
             break
-        case .vintage:
-            // Filtro vintage con saturación reducida y contraste aumentado
-            if let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(outputImage, forKey: kCIInputImageKey)
-                filter.setValue(0.7, forKey: kCIInputSaturationKey)
-                filter.setValue(1.2, forKey: kCIInputContrastKey)
-                filter.setValue(0.9, forKey: kCIInputBrightnessKey)
-                if let output = filter.outputImage {
-                    outputImage = output
-                }
-            }
-        case .blackAndWhite:
-            if let filter = CIFilter(name: "CIColorMonochrome") {
-                filter.setValue(outputImage, forKey: kCIInputImageKey)
-                filter.setValue(CIColor.white, forKey: kCIInputColorKey)
-                filter.setValue(1.0, forKey: kCIInputIntensityKey)
-                if let output = filter.outputImage {
-                    outputImage = output
-                }
-            }
         case .sepia:
             if let filter = CIFilter(name: "CISepiaTone") {
                 filter.setValue(outputImage, forKey: kCIInputImageKey)
@@ -251,37 +235,9 @@ enum PhotoFilter: CaseIterable {
                     outputImage = output
                 }
             }
-        case .cool:
-            if let filter = CIFilter(name: "CITemperatureAndTint") {
-                filter.setValue(outputImage, forKey: kCIInputImageKey)
-                filter.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
-                filter.setValue(CIVector(x: 6000, y: -100), forKey: "inputTargetNeutral")
-                if let output = filter.outputImage {
-                    outputImage = output
-                }
-            }
-        case .warm:
-            if let filter = CIFilter(name: "CITemperatureAndTint") {
-                filter.setValue(outputImage, forKey: kCIInputImageKey)
-                filter.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
-                filter.setValue(CIVector(x: 7000, y: 100), forKey: "inputTargetNeutral")
-                if let output = filter.outputImage {
-                    outputImage = output
-                }
-            }
-        case .dramatic:
-            if let filter = CIFilter(name: "CIColorControls") {
-                filter.setValue(outputImage, forKey: kCIInputImageKey)
-                filter.setValue(1.3, forKey: kCIInputSaturationKey)
-                filter.setValue(1.4, forKey: kCIInputContrastKey)
-                filter.setValue(0.8, forKey: kCIInputBrightnessKey)
-                if let output = filter.outputImage {
-                    outputImage = output
-                }
-            }
-        case .gritty:
-            // Aplicar LUT Canon Gritty
-            return LUTFilter.applyLUT(to: image, lutFileName: "02_Canon LUTs_Gritty") ?? image
+        case .gritty, .kodak, .lut2:
+            // Ya manejados arriba
+            break
         }
         
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
@@ -299,21 +255,26 @@ class LUTFilter {
         // Intentar encontrar el archivo LUT en diferentes ubicaciones
         var lutURL: URL?
         
-        // Opción 1: Buscar en el bundle directamente
+        // Opción 1: Buscar en el bundle directamente con extensión .cube
         lutURL = Bundle.main.url(forResource: lutFileName, withExtension: "cube")
         
-        // Opción 2: Buscar en subdirectorio
+        // Opción 2: Buscar en el bundle directamente con extensión .CUBE
+        if lutURL == nil {
+            lutURL = Bundle.main.url(forResource: lutFileName, withExtension: "CUBE")
+        }
+        
+        // Opción 3: Buscar en subdirectorio con extensión .cube
         if lutURL == nil {
             lutURL = Bundle.main.url(forResource: lutFileName, withExtension: "cube", subdirectory: "Resources/02_Canon LUTs_Gritty")
         }
         
-        // Opción 3: Buscar recursivamente en el bundle
+        // Opción 4: Buscar recursivamente en el bundle
         if lutURL == nil {
             if let bundlePath = Bundle.main.resourcePath {
                 let fileManager = FileManager.default
                 if let enumerator = fileManager.enumerator(atPath: bundlePath) {
                     for case let file as String in enumerator {
-                        if file.contains(lutFileName) && file.hasSuffix(".cube") {
+                        if file.contains(lutFileName) && (file.hasSuffix(".cube") || file.hasSuffix(".CUBE")) {
                             lutURL = URL(fileURLWithPath: bundlePath).appendingPathComponent(file)
                             break
                         }

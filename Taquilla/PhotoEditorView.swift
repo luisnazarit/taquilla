@@ -1,7 +1,11 @@
 import PhotosUI
 import SwiftUI
+import CoreLocation
+import MapKit
 
 struct PhotoEditorView: View {
+    @StateObject private var locationManager = LocationManager()
+    
     @State private var selectedImage: UIImage?
     @State private var showingImagePicker = false
     @State private var currentFilter: PhotoFilter = .none
@@ -24,9 +28,10 @@ struct PhotoEditorView: View {
   @State private var currentDrawnPath: [CGPoint] = []
   @State private var selectedCurvedTextIndex: Int? = nil
   
-  // Template states
-  @State private var showingTemplatePicker = false
-  @State private var weatherOverlay: WeatherOverlay?
+    // Template states
+    @State private var showingTemplatePicker = false
+    @State private var weatherOverlay: WeatherOverlay?
+    @State private var locationOverlay: LocationOverlay?
   
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -53,6 +58,7 @@ struct PhotoEditorView: View {
               textElements = []
               curvedTextElements = []
               weatherOverlay = nil
+              locationOverlay = nil
               currentFilter = .none
             }) {
               Image(systemName: "xmark.circle.fill")
@@ -201,6 +207,20 @@ struct PhotoEditorView: View {
                       }
                     }
                   }
+                  
+                  // Location overlay
+                  if let location = locationOverlay {
+                    VStack {
+                      Spacer()
+                      HStack {
+                        Spacer()
+                        LocationOverlayView(location: location, onRemove: {
+                          locationOverlay = nil
+                        })
+                        .padding(20)
+                      }
+                    }
+                  }
                 }
               )
             }
@@ -297,11 +317,29 @@ struct PhotoEditorView: View {
                     .frame(width: 80, height: 80)
                     .background(Color.gray.opacity(0.2))
                     .cornerRadius(12)
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
+                  }
+                  
+                  // Plantilla: Ubicación
+                  Button(action: {
+                    loadLocationData()
+                  }) {
+                    VStack(spacing: 4) {
+                      Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 32))
+                        .foregroundColor(.blue)
+                      Text("Ubicación")
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
                     }
+                    .frame(width: 80, height: 80)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
+                  }
+                }
+                .padding(.horizontal)
+              }
+            }
                 }
                 .padding()
                 .background(Color(.systemBackground))
@@ -683,6 +721,11 @@ struct PhotoEditorView: View {
       if let weather = weatherOverlay {
         drawWeatherOverlay(weather, in: context.cgContext, imageSize: targetSize, scale: scale)
       }
+      
+      // Dibujar location overlay
+      if let location = locationOverlay {
+        drawLocationOverlay(location, in: context.cgContext, imageSize: targetSize, scale: scale)
+      }
     }
   }
   
@@ -903,6 +946,85 @@ struct PhotoEditorView: View {
     context.restoreGState()
   }
   
+  func drawLocationOverlay(_ location: LocationOverlay, in context: CGContext, imageSize: CGSize, scale: CGFloat) {
+    context.saveGState()
+    
+    // Configuración de posicionamiento: esquina inferior derecha con padding escalado
+    let padding: CGFloat = 20 * scale
+    
+    // Fuentes con tamaños escalados
+    guard let neighborhoodFont = UIFont(name: "Ari-W9500Bold", size: 22 * scale) else { return }
+    guard let infoFont = UIFont(name: "Ari-W9500Display", size: 14 * scale) else { return }
+    
+    // Atributos de texto
+    let neighborhoodAttributes: [NSAttributedString.Key: Any] = [
+      .font: neighborhoodFont,
+      .foregroundColor: UIColor.white
+    ]
+    
+    let infoAttributes: [NSAttributedString.Key: Any] = [
+      .font: infoFont,
+      .foregroundColor: UIColor.white.withAlphaComponent(0.9)
+    ]
+    
+    // Calcular tamaños
+    let neighborhoodString = location.neighborhood.uppercased() as NSString
+    let neighborhoodSize = neighborhoodString.size(withAttributes: neighborhoodAttributes)
+    
+    let dateString = location.date as NSString
+    let dateSize = dateString.size(withAttributes: infoAttributes)
+    
+    let cityString = "\(location.city), \(location.country)" as NSString
+    let citySize = cityString.size(withAttributes: infoAttributes)
+    
+    // Calcular el ancho máximo y altura total
+    let maxWidth = max(neighborhoodSize.width, dateSize.width, citySize.width)
+    let vStackSpacing: CGFloat = 6 * scale
+    let totalHeight = neighborhoodSize.height + vStackSpacing + dateSize.height + vStackSpacing + citySize.height
+    
+    // Posición inicial (esquina inferior derecha, alineado a la izquierda)
+    let baseX = imageSize.width - maxWidth - padding - (16 * scale) // 16 es el padding interno
+    let baseY = imageSize.height - totalHeight - padding - (16 * scale)
+    
+    // Dibujar barrio
+    let neighborhoodRect = CGRect(
+      x: baseX,
+      y: baseY,
+      width: neighborhoodSize.width,
+      height: neighborhoodSize.height
+    )
+    context.saveGState()
+    context.setShadow(offset: CGSize(width: 0, height: 4 * scale), blur: 8 * scale, color: UIColor.black.withAlphaComponent(0.5).cgColor)
+    neighborhoodString.draw(in: neighborhoodRect, withAttributes: neighborhoodAttributes)
+    context.restoreGState()
+    
+    // Dibujar fecha
+    let dateRect = CGRect(
+      x: baseX,
+      y: baseY + neighborhoodSize.height + vStackSpacing,
+      width: dateSize.width,
+      height: dateSize.height
+    )
+    context.saveGState()
+    context.setShadow(offset: CGSize(width: 0, height: 4 * scale), blur: 8 * scale, color: UIColor.black.withAlphaComponent(0.5).cgColor)
+    dateString.draw(in: dateRect, withAttributes: infoAttributes)
+    context.restoreGState()
+    
+    // Dibujar ciudad y país
+    let cityRect = CGRect(
+      x: baseX,
+      y: baseY + neighborhoodSize.height + vStackSpacing + dateSize.height + vStackSpacing,
+      width: citySize.width,
+      height: citySize.height
+    )
+    context.saveGState()
+    context.setShadow(offset: CGSize(width: 0, height: 4 * scale), blur: 8 * scale, color: UIColor.black.withAlphaComponent(0.5).cgColor)
+    cityString.draw(in: cityRect, withAttributes: infoAttributes)
+    context.restoreGState()
+    
+    context.restoreGState()
+  }
+  
   func loadWeatherData() async {
     // Por ahora, vamos a usar datos de ejemplo
     // En la próxima iteración integraremos una API real de clima
@@ -920,6 +1042,59 @@ struct PhotoEditorView: View {
     await MainActor.run {
       weatherOverlay = exampleWeather
       showingTemplatePicker = false
+    }
+  }
+  
+  func loadLocationData() {
+    // Pedir ubicación actual
+    locationManager.requestLocation()
+    
+    // Esperar un momento para que se obtenga la ubicación
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+      self.locationManager.getLocationDetails { result in
+        switch result {
+        case .success(let locationInfo):
+          // Obtener la fecha actual formateada
+          let dateFormatter = DateFormatter()
+          dateFormatter.locale = Locale(identifier: "es_ES")
+          dateFormatter.dateFormat = "dd, MMMM, yyyy"
+          let currentDate = dateFormatter.string(from: Date())
+          
+          // Crear overlay con información real
+          let realLocation = LocationOverlay(
+            neighborhood: locationInfo.neighborhood,
+            date: currentDate,
+            city: locationInfo.city,
+            country: locationInfo.country
+          )
+          
+          DispatchQueue.main.async {
+            self.locationOverlay = realLocation
+            self.showingTemplatePicker = false
+          }
+          
+        case .failure(let error):
+          print("❌ Error obteniendo detalles de ubicación: \(error.localizedDescription)")
+          
+          // Fallback a datos de ejemplo
+          let dateFormatter = DateFormatter()
+          dateFormatter.locale = Locale(identifier: "es_ES")
+          dateFormatter.dateFormat = "dd, MMMM, yyyy"
+          let currentDate = dateFormatter.string(from: Date())
+          
+          let fallbackLocation = LocationOverlay(
+            neighborhood: "Ubicación Actual",
+            date: currentDate,
+            city: "Santiago",
+            country: "Chile"
+          )
+          
+          DispatchQueue.main.async {
+            self.locationOverlay = fallbackLocation
+            self.showingTemplatePicker = false
+          }
+        }
+      }
     }
   }
 }

@@ -14,6 +14,7 @@
 		EA7ABA1463A44BBEABA2F39D /* CurvedTextInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D0AFC3C5FE4D139B656818 /* CurvedTextInputView.swift */; };
 		6EF8A8C6D72F4630B588B32A /* DrawingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD761B6F4E204D1F99A9AE1C /* DrawingCanvasView.swift */; };
 		2CD831903D6B448DA8211EC1 /* WeatherOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */; };
+		98028390-88C3-4B25-BBB0-C3F237F1C69E /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */; };
 		A1234567890123456789012A /* TaquillaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012B /* TaquillaApp.swift */; };
 		A1234567890123456789012C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012D /* ContentView.swift */; };
 		A1234567890123456789012E /* PhotoEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012F /* PhotoEditorView.swift */; };
@@ -42,6 +43,7 @@
 		93D0AFC3C5FE4D139B656818 /* CurvedTextInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurvedTextInputView.swift; sourceTree = "<group>"; };
 		FD761B6F4E204D1F99A9AE1C /* DrawingCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvasView.swift; sourceTree = "<group>"; };
 		7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherOverlayView.swift; sourceTree = "<group>"; };
+		F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		A1234567890123456789012B /* TaquillaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaquillaApp.swift; sourceTree = "<group>"; };
 		A1234567890123456789012D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012F /* PhotoEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEditorView.swift; sourceTree = "<group>"; };
@@ -106,6 +108,7 @@
 				A1234567890123456789012D /* ContentView.swift */,
 				A1234567890123456789012F /* PhotoEditorView.swift */,
 				A1234567890123456789012H /* Models.swift */,
+				F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */,
 				A1234567890123456789012J /* ImagePicker.swift */,
 				A1234567890123456789012L /* TextEditorView.swift */,
 				A1234567890123456789012N /* FilterPreviewView.swift */,
@@ -221,6 +224,7 @@
 				A1234567890123456789012C /* ContentView.swift in Sources */,
 				A1234567890123456789012E /* PhotoEditorView.swift in Sources */,
 				A1234567890123456789012G /* Models.swift in Sources */,
+				98028390-88C3-4B25-BBB0-C3F237F1C69E /* LocationManager.swift in Sources */,
 				A1234567890123456789012I /* ImagePicker.swift in Sources */,
 				A1234567890123456789012K /* TextEditorView.swift in Sources */,
 				A1234567890123456789012M /* FilterPreviewView.swift in Sources */,

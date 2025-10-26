@@ -22,6 +22,10 @@
 		<string>instagram-stories</string>
 		<string>instagram</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Taquilla necesita tu ubicación para agregar información del lugar en tus fotos.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Taquilla necesita tu ubicación para agregar información del lugar en tus fotos.</string>
 </dict>
 </plist>
 

@@ -1,5 +1,13 @@
 import SwiftUI
 
+// MARK: - Location Overlay Model
+struct LocationOverlay {
+  let neighborhood: String
+  let date: String
+  let city: String
+  let country: String
+}
+
 enum WeatherType {
   case sunny
   case cold
@@ -73,6 +81,44 @@ struct WeatherOverlayView: View {
         Text(weather.location.uppercased())
           .font(.custom("Ari-W9500Display", size: 12))
           .foregroundColor(.white)
+      }
+      .padding(16)
+      .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+    }
+  }
+}
+
+// MARK: - Location Overlay View
+struct LocationOverlayView: View {
+  let location: LocationOverlay
+  let onRemove: () -> Void
+  
+  var body: some View {
+    VStack(alignment: .trailing, spacing: 4) {
+      // Botón para remover
+      Button(action: onRemove) {
+        Image(systemName: "xmark.circle.fill")
+          .font(.system(size: 20))
+          .foregroundColor(.white.opacity(0.8))
+      }
+      .padding(.bottom, 8)
+      
+      // Contenido de la ubicación
+      VStack(alignment: .leading, spacing: 6) {
+        // Barrio
+        Text(location.neighborhood.uppercased())
+          .font(.custom("Ari-W9500Bold", size: 22))
+          .foregroundColor(.white)
+        
+        // Fecha
+        Text(location.date)
+          .font(.custom("Ari-W9500Display", size: 14))
+          .foregroundColor(.white.opacity(0.9))
+        
+        // Ciudad y país
+        Text("\(location.city), \(location.country)")
+          .font(.custom("Ari-W9500Display", size: 14))
+          .foregroundColor(.white.opacity(0.9))
       }
       .padding(16)
       .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)

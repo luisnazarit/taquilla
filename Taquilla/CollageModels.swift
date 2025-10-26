@@ -17,6 +17,21 @@ struct CollageFrame: Identifiable {
     let y: CGFloat  // Porcentaje (0-1)
     let width: CGFloat  // Porcentaje (0-1)
     let height: CGFloat  // Porcentaje (0-1)
+    var offsetX: CGFloat = 0  // Desfase aleatorio en X
+    var offsetY: CGFloat = 0  // Desfase aleatorio en Y
+    var scale: CGFloat = 1.0   // Escala para sobreposición
+    
+    init(x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat) {
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        // Offset aleatorio más sutil
+        self.offsetX = CGFloat.random(in: -0.04...0.04)
+        self.offsetY = CGFloat.random(in: -0.04...0.04)
+        // Escala muy sutil: 1.02 a 1.08 para overlap mínimo pero presente
+        self.scale = CGFloat.random(in: 1.02...1.08)
+    }
 }
 
 // MARK: - Collage Layout Type

@@ -16,6 +16,10 @@ struct GalleryView: View {
             }
             .navigationTitle("Galería")
             .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                // Validar y limpiar fotos borradas al abrir la galería
+                photoManager.validateAndCleanupPhotos()
+            }
         }
         .fullScreenCover(item: $selectedPhoto) { photo in
             FullScreenPhotoView(photo: photo, selectedPhoto: $selectedPhoto)

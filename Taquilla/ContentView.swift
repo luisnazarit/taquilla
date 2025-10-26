@@ -15,6 +15,7 @@ struct ContentView: View {
                 .tag(0)
             
             CollageView()
+                .environmentObject(photoManager)
                 .tabItem {
                     Image(systemName: "grid")
                     Text("Collage")

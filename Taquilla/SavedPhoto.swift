@@ -102,6 +102,11 @@ class PhotoManager: ObservableObject {
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [photo.assetIdentifier], options: nil)
         
         guard let asset = fetchResult.firstObject else {
+            // La foto no existe en la librería, limpiarla de savedPhotos
+            print("⚠️ Foto con ID \(photo.assetIdentifier) no encontrada, limpiando...")
+            DispatchQueue.main.async {
+                self.cleanupDeletedPhoto(photo)
+            }
             completion(nil)
             return
         }
@@ -119,6 +124,38 @@ class PhotoManager: ObservableObject {
         ) { image, _ in
             DispatchQueue.main.async {
                 completion(image)
+            }
+        }
+    }
+    
+    // Limpiar foto que ya no existe
+    private func cleanupDeletedPhoto(_ photo: SavedPhoto) {
+        savedPhotos.removeAll { $0.id == photo.id }
+        savePhotos()
+        print("🧹 Foto borrada limpiada de la galería")
+    }
+    
+    // Validar todas las fotos y limpiar las borradas
+    func validateAndCleanupPhotos() {
+        let group = DispatchGroup()
+        var photosToRemove: [SavedPhoto] = []
+        
+        for photo in savedPhotos {
+            group.enter()
+            let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [photo.assetIdentifier], options: nil)
+            if fetchResult.firstObject == nil {
+                photosToRemove.append(photo)
+            }
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            if !photosToRemove.isEmpty {
+                self.savedPhotos.removeAll { photo in
+                    photosToRemove.contains { $0.id == photo.id }
+                }
+                self.savePhotos()
+                print("🧹 Limpiadas \(photosToRemove.count) fotos borradas")
             }
         }
     }

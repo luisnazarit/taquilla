@@ -16,6 +16,7 @@
 		2CD831903D6B448DA8211EC1 /* WeatherOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */; };
 		98028390-88C3-4B25-BBB0-C3F237F1C69E /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */; };
 		57C0A52C-DE1B-4235-B45F-A8847010E681 /* SavedPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52718F5-EC04-42B3-A6F8-4BAF5AF81C10 /* SavedPhoto.swift */; };
+		D569B057-771B-4507-9312-33E5FEE921C0 /* CollageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE49FEB2-45AC-43F0-88A4-B13EE685765A /* CollageModels.swift */; };
 		A1234567890123456789012A /* TaquillaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012B /* TaquillaApp.swift */; };
 		A1234567890123456789012C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012D /* ContentView.swift */; };
 		A1234567890123456789012E /* PhotoEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890123456789012F /* PhotoEditorView.swift */; };
@@ -46,6 +47,7 @@
 		7B4D3ABCDEFC4412A3328F0F /* WeatherOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherOverlayView.swift; sourceTree = "<group>"; };
 		F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		C52718F5-EC04-42B3-A6F8-4BAF5AF81C10 /* SavedPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedPhoto.swift; sourceTree = "<group>"; };
+		FE49FEB2-45AC-43F0-88A4-B13EE685765A /* CollageModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollageModels.swift; sourceTree = "<group>"; };
 		A1234567890123456789012B /* TaquillaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaquillaApp.swift; sourceTree = "<group>"; };
 		A1234567890123456789012D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1234567890123456789012F /* PhotoEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEditorView.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				A1234567890123456789012H /* Models.swift */,
 				F7AB0FEF-356F-4A77-8C1A-2A1E1D50380D /* LocationManager.swift */,
 				C52718F5-EC04-42B3-A6F8-4BAF5AF81C10 /* SavedPhoto.swift */,
+				FE49FEB2-45AC-43F0-88A4-B13EE685765A /* CollageModels.swift */,
 				A1234567890123456789012J /* ImagePicker.swift */,
 				A1234567890123456789012L /* TextEditorView.swift */,
 				A1234567890123456789012N /* FilterPreviewView.swift */,
@@ -229,6 +232,7 @@
 				A1234567890123456789012G /* Models.swift in Sources */,
 				98028390-88C3-4B25-BBB0-C3F237F1C69E /* LocationManager.swift in Sources */,
 				57C0A52C-DE1B-4235-B45F-A8847010E681 /* SavedPhoto.swift in Sources */,
+				D569B057-771B-4507-9312-33E5FEE921C0 /* CollageModels.swift in Sources */,
 				A1234567890123456789012I /* ImagePicker.swift in Sources */,
 				A1234567890123456789012K /* TextEditorView.swift in Sources */,
 				A1234567890123456789012M /* FilterPreviewView.swift in Sources */,

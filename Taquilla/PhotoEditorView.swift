@@ -5,6 +5,7 @@ import MapKit
 
 struct PhotoEditorView: View {
     @StateObject private var locationManager = LocationManager()
+    @EnvironmentObject var photoManager: PhotoManager
     
     @State private var selectedImage: UIImage?
     @State private var showingImagePicker = false
@@ -530,17 +531,23 @@ struct PhotoEditorView: View {
   func saveImage() {
     guard let image = displayImage else { return }
     let finalImage = createImageWithTexts(from: image)
-    UIImageWriteToSavedPhotosAlbum(finalImage, nil, nil, nil)
     
-    // Mostrar mensaje de éxito
-    withAnimation {
-      showingSaveSuccess = true
-    }
-    
-    // Ocultar mensaje después de 2 segundos
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-      withAnimation {
-        showingSaveSuccess = false
+    // Usar PhotoManager para guardar y registrar la foto
+    photoManager.savePhoto(finalImage) { success in
+      if success {
+        // Mostrar mensaje de éxito
+        withAnimation {
+          showingSaveSuccess = true
+        }
+        
+        // Ocultar mensaje después de 2 segundos
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+          withAnimation {
+            showingSaveSuccess = false
+          }
+        }
+      } else {
+        print("❌ Error guardando la foto")
       }
     }
   }

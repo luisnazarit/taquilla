@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var photoManager = PhotoManager()
     @State private var selectedTab = 0
     
     var body: some View {
         TabView(selection: $selectedTab) {
             PhotoEditorView()
+                .environmentObject(photoManager)
                 .tabItem {
                     Image(systemName: "photo")
                     Text("Editor")
@@ -20,6 +22,7 @@ struct ContentView: View {
                 .tag(1)
             
             GalleryView()
+                .environmentObject(photoManager)
                 .tabItem {
                     Image(systemName: "photo.on.rectangle")
                     Text("Galería")

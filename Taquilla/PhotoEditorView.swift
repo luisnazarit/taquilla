@@ -55,20 +55,19 @@ struct PhotoEditorView: View {
     
     var body: some View {
         NavigationView {
-            ZStack {
-                // Fondo de la aplicación
-                Image("Background")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-
+        ZStack {
+            // Fondo de la aplicación
+            Image("Background")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
                 GeometryReader { geometry in
                   if let image = displayImage {
-                    Image(uiImage: image)
-                      .resizable()
-                      .aspectRatio(contentMode: .fit)
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                       .frame(maxWidth: .infinity, maxHeight: .infinity)
                       .background(
                         GeometryReader { imageGeometry in
@@ -198,7 +197,7 @@ struct PhotoEditorView: View {
               )
                   } else {
                     emptyStateView
-                  }
+                    }
                 }
                 .frame(maxHeight: .infinity)
                 
@@ -221,32 +220,32 @@ struct PhotoEditorView: View {
                 drawingMode = .none
                 currentDrawingPath = []
               }) {
-                VStack {
+                            VStack {
                   Image(systemName: "scribble.variable")
-                    .font(.title2)
+                                    .font(.title2)
                   Text("Curvo")
-                    .font(.caption)
-                }
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
-              }
-              
+                        }
+                        
               Button(action: { showingFilterPicker.toggle() }) {
-                VStack {
-                  Image(systemName: "slider.horizontal.3")
-                    .font(.title2)
-                  Text("Filtros")
-                    .font(.caption)
-                }
+                            VStack {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.title2)
+                                Text("Filtros")
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
-              }
-              
+                        }
+                        
               Button(action: { showingTemplatePicker.toggle() }) {
-                VStack {
+                            VStack {
                   Image(systemName: "square.grid.2x2")
-                    .font(.title2)
+                                    .font(.title2)
                   Text("Plantillas")
-                    .font(.caption)
-                }
+                                    .font(.caption)
+                            }
                 .foregroundColor(.white)
               }
                     }
@@ -316,28 +315,28 @@ struct PhotoEditorView: View {
                 .padding(.vertical, 16)
             }
             }
-      }
-      .toolbar {
-        if selectedImage != nil {
-          ToolbarItem(placement: .navigationBarTrailing) {
-            HStack(spacing: 16) {
-              // Botón de compartir
-              Button(action: { shareToInstagramStory() }) {
-                Image(systemName: "square.and.arrow.up")
-                  .font(.title3)
-                  .foregroundColor(.white)
-              }
-              
-              // Botón guardar
-              Button(action: { saveImage() }) {
-                Image(systemName: "square.and.arrow.down")
-                  .font(.title3)
-                  .foregroundColor(.white)
+        }
+        .toolbar {
+          if selectedImage != nil {
+            ToolbarItem(placement: .navigationBarTrailing) {
+              HStack(spacing: 20) {
+                // Botón de compartir
+                Button(action: { shareToInstagramStory() }) {
+                  Image(systemName: "square.and.arrow.up")
+                    .font(.body)
+                    .foregroundColor(.white)
+                }
+                
+                // Botón guardar
+                Button(action: { saveImage() }) {
+                  Image(systemName: "square.and.arrow.down")
+                    .font(.body)
+                    .foregroundColor(.white)
+                }
               }
             }
           }
         }
-      }
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage)
       }

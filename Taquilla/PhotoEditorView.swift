@@ -41,6 +41,13 @@ struct PhotoEditorView: View {
   @State private var weatherOverlay: WeatherOverlay?
   @State private var locationOverlay: LocationOverlay?
   @State private var isLoadingTemplate = false
+  
+  // Sticker states
+  @State private var showingStickerPicker = false
+  @State private var stickerElements: [StickerElement] = []
+  @State private var availableStickers: [StickerInfo] = []
+  @State private var nextZIndex = 0
+  @State private var isLoadingStickers = false
 
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -156,6 +163,33 @@ struct PhotoEditorView: View {
                       )
                     }
 
+                    // Stickers
+                    ForEach(stickerElements.sorted(by: { $0.zIndex < $1.zIndex })) { sticker in
+                      StickerElementView(
+                        stickerElement: sticker,
+                        onDrag: { translation in
+                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                            stickerElements[index].position.x += translation.width
+                            stickerElements[index].position.y += translation.height
+                          }
+                        },
+                        onScale: { scale in
+                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                            let newScale = sticker.scale * scale
+                            stickerElements[index].scale = min(max(newScale, 0.3), 4.0)
+                          }
+                        },
+                        onRotation: { rotation in
+                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                            stickerElements[index].rotation += rotation
+                          }
+                        },
+                        onDelete: {
+                          stickerElements.removeAll { $0.id == sticker.id }
+                        }
+                      )
+                    }
+
                     // Canvas para dibujar cuando está en modo dibujo
                     if isDrawingMode {
                       DrawingCanvasView(
@@ -255,6 +289,18 @@ struct PhotoEditorView: View {
                     Image(systemName: "square.grid.2x2")
                       .font(.title2)
                     Text("Plantillas")
+                      .font(.caption)
+                  }
+                  .foregroundColor(.white)
+                }
+
+                Button(action: { 
+                  showingStickerPicker = true
+                }) {
+                  VStack {
+                    Image(systemName: "face.smiling")
+                      .font(.title2)
+                    Text("Stickers")
                       .font(.caption)
                   }
                   .foregroundColor(.white)
@@ -484,6 +530,32 @@ struct PhotoEditorView: View {
             drawingMode = .none
             selectedCurvedTextIndex = nil
             showingCurvedTextEditor = false
+          }
+        )
+      }
+      .sheet(isPresented: $showingStickerPicker) {
+        StickerPickerSheetView(
+          availableStickers: availableStickers,
+          isLoadingStickers: $isLoadingStickers,
+          onStickerSelected: { stickerInfo in
+            let newSticker = StickerElement(
+              imageName: stickerInfo.name,
+              imageURL: stickerInfo.url,
+              position: CGPoint(x: displayedImageSize.width * 0.5, y: displayedImageSize.height * 0.5),
+              scale: 1.0,
+              rotation: 0.0,
+              zIndex: nextZIndex
+            )
+            stickerElements.append(newSticker)
+            nextZIndex += 1
+            showingStickerPicker = false
+          },
+          onLoadStickers: {
+            Task {
+              isLoadingStickers = true
+              availableStickers = await StickerManager.shared.loadAvailableStickers()
+              isLoadingStickers = false
+            }
           }
         )
       }
@@ -1156,6 +1228,252 @@ struct PhotoEditorView: View {
           }
         }
       }
+    }
+  }
+}
+
+// MARK: - Sticker Views
+extension PhotoEditorView {
+  struct StickerPickerSheetView: View {
+    let availableStickers: [StickerInfo]
+    @Binding var isLoadingStickers: Bool
+    let onStickerSelected: (StickerInfo) -> Void
+    let onLoadStickers: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+      NavigationView {
+        VStack(spacing: 20) {
+          // Header
+          HStack {
+            Text("Seleccionar Sticker")
+              .font(.title2)
+              .fontWeight(.bold)
+            
+            Spacer()
+            
+            Button("Cancelar") {
+              dismiss()
+            }
+            .foregroundColor(.blue)
+          }
+          .padding(.horizontal)
+          .padding(.top)
+          
+          // Contenido principal
+          if isLoadingStickers {
+            // Loading state
+            VStack(spacing: 20) {
+              Spacer()
+              
+              ProgressView()
+                .scaleEffect(1.5)
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+              
+              Text("Cargando stickers...")
+                .font(.body)
+                .foregroundColor(.secondary)
+              
+              Spacer()
+            }
+          } else if availableStickers.isEmpty {
+            // Empty state
+            VStack(spacing: 20) {
+              Spacer()
+              
+              Image(systemName: "photo")
+                .font(.system(size: 60))
+                .foregroundColor(.gray)
+              
+              Text("No hay stickers disponibles")
+                .font(.body)
+                .foregroundColor(.secondary)
+              
+              Button("Recargar") {
+                onLoadStickers()
+              }
+              .buttonStyle(.borderedProminent)
+              
+              Spacer()
+            }
+          } else {
+            // Grid de stickers
+            ScrollView {
+              LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16) {
+                ForEach(Array(availableStickers.enumerated()), id: \.offset) { index, stickerInfo in
+                  Button(action: {
+                    onStickerSelected(stickerInfo)
+                  }) {
+                    VStack(spacing: 8) {
+                      // Cargar imagen desde URL
+                      AsyncImage(url: URL(string: stickerInfo.thumbnail ?? stickerInfo.url)) { image in
+                        image
+                          .resizable()
+                          .aspectRatio(contentMode: .fit)
+                          .frame(width: 60, height: 60)
+                          .background(Color.gray.opacity(0.1))
+                          .cornerRadius(12)
+                          .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                              .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                          )
+                      } placeholder: {
+                        // Placeholder mientras carga
+                        RoundedRectangle(cornerRadius: 12)
+                          .fill(Color.gray.opacity(0.1))
+                          .frame(width: 60, height: 60)
+                          .overlay(
+                            ProgressView()
+                              .scaleEffect(0.8)
+                          )
+                      }
+                      
+                      Text(stickerInfo.name)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                    }
+                  }
+                  .buttonStyle(PlainButtonStyle())
+                }
+              }
+              .padding(.horizontal)
+            }
+          }
+          
+          Spacer()
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+          // Cargar stickers cuando aparece el modal
+          if availableStickers.isEmpty && !isLoadingStickers {
+            onLoadStickers()
+          }
+        }
+      }
+    }
+  }
+  
+struct StickerElementView: View {
+  let stickerElement: StickerElement
+  let onDrag: (CGSize) -> Void
+  let onScale: (CGFloat) -> Void
+  let onRotation: (Double) -> Void
+  let onDelete: () -> Void
+  
+  @State private var dragOffset: CGSize = .zero
+  @State private var lastScale: CGFloat = 1.0
+  @State private var lastRotation: Angle = .zero
+  
+  // Professional gesture state management
+  @State private var isDragging: Bool = false
+  @State private var isScaling: Bool = false
+  @State private var isRotating: Bool = false
+  @State private var gestureStartScale: CGFloat = 1.0
+  @State private var gestureStartRotation: Double = 0.0
+    
+    var body: some View {
+      Group {
+        if let imageURL = stickerElement.imageURL, !imageURL.isEmpty {
+          // Cargar imagen desde URL
+          AsyncImage(url: URL(string: imageURL)) { image in
+            image
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+          } placeholder: {
+            // Placeholder mientras carga
+            RoundedRectangle(cornerRadius: 8)
+              .fill(Color.gray.opacity(0.3))
+              .overlay(
+                ProgressView()
+                  .scaleEffect(0.8)
+              )
+          }
+        } else {
+          // Usar imagen local
+          Image(stickerElement.imageName)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+        }
+      }
+      .frame(width: 80 * stickerElement.scale, height: 80 * stickerElement.scale)
+      .contentShape(Rectangle())
+      .position(
+        x: stickerElement.position.x + dragOffset.width,
+        y: stickerElement.position.y + dragOffset.height
+      )
+      .rotationEffect(.degrees(stickerElement.rotation))
+      .scaleEffect(stickerElement.scale)
+      .gesture(
+        // Professional gesture handling with priority management
+        DragGesture(minimumDistance: 0)
+          .onChanged { value in
+            // Only allow drag if not scaling or rotating
+            if !isScaling && !isRotating {
+              isDragging = true
+              dragOffset = value.translation
+            }
+          }
+          .onEnded { _ in
+            if isDragging {
+              onDrag(dragOffset)
+              dragOffset = .zero
+              isDragging = false
+            }
+          }
+      )
+      .simultaneousGesture(
+        // Magnification gesture with proper state management
+        MagnificationGesture()
+          .onChanged { value in
+            if !isDragging && !isRotating {
+              isScaling = true
+              let delta = value / lastScale
+              lastScale = value
+              onScale(delta)
+            }
+          }
+          .onEnded { _ in
+            if isScaling {
+              lastScale = 1.0
+              isScaling = false
+            }
+          }
+      )
+      .simultaneousGesture(
+        // Rotation gesture with proper state management
+        RotationGesture()
+          .onChanged { value in
+            if !isDragging && !isScaling {
+              isRotating = true
+              let delta = value - lastRotation
+              lastRotation = value
+              onRotation(delta.degrees)
+            }
+          }
+          .onEnded { _ in
+            if isRotating {
+              lastRotation = .zero
+              isRotating = false
+            }
+          }
+      )
+      .onTapGesture(count: 2) {
+        // Double tap to delete
+        onDelete()
+      }
+      .overlay(
+        // Delete button
+        Button(action: onDelete) {
+          Image(systemName: "xmark.circle.fill")
+            .font(.title2)
+            .foregroundColor(.red)
+            .background(Color.white)
+            .clipShape(Circle())
+        }
+        .offset(x: 20, y: -20),
+        alignment: .topTrailing
+      )
     }
   }
 }

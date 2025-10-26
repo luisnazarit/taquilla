@@ -8,6 +8,13 @@ struct PhotoEditorView: View {
     @EnvironmentObject var photoManager: PhotoManager
     
     @State private var selectedImage: UIImage?
+    
+    // Inicializador para permitir imagen inicial
+    init(initialImage: UIImage? = nil) {
+        if let image = initialImage {
+            _selectedImage = State(initialValue: image)
+        }
+    }
     @State private var showingImagePicker = false
     @State private var currentFilter: PhotoFilter = .none
     @State private var textElements: [TextElement] = []
@@ -48,66 +55,58 @@ struct PhotoEditorView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-        // Botones en la parte superior (solo cuando hay imagen)
-        if selectedImage != nil {
-          HStack {
-            // Botón para descartar imagen (izquierda)
-            Button(action: {
-              // Descartar imagen y limpiar todo
-              selectedImage = nil
-              textElements = []
-              curvedTextElements = []
-              weatherOverlay = nil
-              locationOverlay = nil
-              currentFilter = .none
-            }) {
-              Image(systemName: "xmark.circle.fill")
-                .font(.title2)
-                .foregroundColor(.white)
-                .padding(.leading, 16)
-            }
-            
-            Spacer()
-            
-            // Botones de compartir y guardar en la esquina superior derecha
-            HStack(spacing: 12) {
-              // Botón de compartir
-              Button(action: { shareToInstagramStory() }) {
-                Image(systemName: "square.and.arrow.up")
-                  .font(.title2)
-                  .foregroundColor(.white)
-              }
-              
-              // Botón guardar
-              Button(action: { saveImage() }) {
-                Image(systemName: "square.and.arrow.down")
-                  .font(.title2)
-                  .foregroundColor(.white)
-              }
-            }
-            .padding(.trailing, 16)
-          }
-          .frame(height: 44)
-          .background(Color(.systemBackground))
-        }
-
-                ZStack {
-          if let image = displayImage {
-            GeometryReader { geometry in
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                .background(
-                  GeometryReader { imageGeometry in
-                    Color.clear.onAppear {
-                      displayedImageSize = imageGeometry.size
-                    }
-                    .onChange(of: imageGeometry.size) { oldValue, newValue in
-                      displayedImageSize = newValue
-                    }
+            ZStack {
+                // Fondo de la aplicación
+                Image("Background")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+            // Botones en la parte superior (solo cuando hay imagen)
+            if selectedImage != nil {
+              HStack {
+                Spacer()
+                
+                // Botones de compartir y guardar en la esquina superior derecha
+                HStack(spacing: 12) {
+                  // Botón de compartir
+                  Button(action: { shareToInstagramStory() }) {
+                    Image(systemName: "square.and.arrow.up")
+                      .font(.title3)
+                      .foregroundColor(.white)
                   }
-                )
+                  
+                  // Botón guardar
+                  Button(action: { saveImage() }) {
+                    Image(systemName: "square.and.arrow.down")
+                      .font(.title3)
+                      .foregroundColor(.white)
+                  }
+                }
+              }
+              .frame(maxWidth: .infinity)
+              .frame(height: 32)
+              .padding(.horizontal, 16)
+              .padding(.top, 4)
+            }
+
+                GeometryReader { geometry in
+                  if let image = displayImage {
+                    Image(uiImage: image)
+                      .resizable()
+                      .aspectRatio(contentMode: .fit)
+                      .frame(maxWidth: .infinity, maxHeight: .infinity)
+                      .background(
+                        GeometryReader { imageGeometry in
+                          Color.clear.onAppear {
+                            displayedImageSize = imageGeometry.size
+                          }
+                          .onChange(of: imageGeometry.size) { oldValue, newValue in
+                            displayedImageSize = newValue
+                          }
+                        }
+                      )
               .overlay(
                 ZStack {
                   // Textos rectos normales
@@ -224,13 +223,11 @@ struct PhotoEditorView: View {
                   }
                 }
               )
-            }
-          } else {
-            emptyStateView
-                    }
+                  } else {
+                    emptyStateView
+                  }
                 }
                 .frame(maxHeight: .infinity)
-                .background(Color.black)
                 
         // Barra de herramientas (solo cuando hay imagen)
         if selectedImage != nil {
@@ -251,36 +248,35 @@ struct PhotoEditorView: View {
                 drawingMode = .none
                 currentDrawingPath = []
               }) {
-                            VStack {
+                VStack {
                   Image(systemName: "scribble.variable")
-                                    .font(.title2)
+                    .font(.title2)
                   Text("Curvo")
-                                    .font(.caption)
-                            }
+                    .font(.caption)
+                }
                 .foregroundColor(.white)
-                        }
-                        
+              }
+              
               Button(action: { showingFilterPicker.toggle() }) {
-                            VStack {
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.title2)
-                                Text("Filtros")
-                                    .font(.caption)
-                            }
+                VStack {
+                  Image(systemName: "slider.horizontal.3")
+                    .font(.title2)
+                  Text("Filtros")
+                    .font(.caption)
+                }
                 .foregroundColor(.white)
-                        }
-                        
+              }
+              
               Button(action: { showingTemplatePicker.toggle() }) {
-                            VStack {
+                VStack {
                   Image(systemName: "square.grid.2x2")
-                                    .font(.title2)
+                    .font(.title2)
                   Text("Plantillas")
-                                    .font(.caption)
-                            }
+                    .font(.caption)
+                }
                 .foregroundColor(.white)
-                        }
+              }
                     }
-                    .padding(.horizontal)
                     
                     if showingFilterPicker {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -336,17 +332,18 @@ struct PhotoEditorView: View {
                     .frame(width: 80, height: 80)
                     .background(Color.gray.opacity(0.2))
                     .cornerRadius(12)
-                  }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.bottom, 80) // Padding para no tapar la navegación inferior
+                    }
                 }
-                .padding(.horizontal)
-              }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
             }
-                }
-                .padding()
-                .background(Color(.systemBackground))
             }
       }
-      .navigationBarHidden(true)
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage)
       }

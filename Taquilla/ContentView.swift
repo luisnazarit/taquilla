@@ -6,21 +6,13 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            PhotoEditorView()
-                .environmentObject(photoManager)
-                .tabItem {
-                    Image(systemName: "photo")
-                    Text("Editor")
-                }
-                .tag(0)
-            
             CollageView()
                 .environmentObject(photoManager)
                 .tabItem {
-                    Image(systemName: "grid")
-                    Text("Collage")
+                    Image(systemName: "square.grid.2x2")
+                    Text("Editor")
                 }
-                .tag(1)
+                .tag(0)
             
             GalleryView()
                 .environmentObject(photoManager)
@@ -28,7 +20,7 @@ struct ContentView: View {
                     Image(systemName: "photo.on.rectangle")
                     Text("Galería")
                 }
-                .tag(2)
+                .tag(1)
         }
         .accentColor(.blue)
     }

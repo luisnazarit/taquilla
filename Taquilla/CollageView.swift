@@ -4,45 +4,81 @@ import PhotosUI
 
 struct CollageView: View {
     @EnvironmentObject var photoManager: PhotoManager
-    @State private var selectedPhotoCount = 2
+    @State private var selectedPhotoCount = 1
     @State private var selectedTemplate: CollageTemplate?
     @State private var selectedImages: [UIImage?] = []
     @State private var showingImagePicker = false
     @State private var currentImageIndex = 0
     @State private var showingSaveSuccess = false
+    @State private var showingPhotoEditor = true  // Iniciar con editor de 1 foto
+    @State private var selectedSingleImage: UIImage?
+    @State private var collageImageForEditing: UIImage?
     
-    private let photoCountOptions = [2, 3, 4, 5, 6]
+    private let photoCountOptions = [1, 2, 3, 4, 5, 6]
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Selector de número de fotos (solo si no hay plantilla seleccionada)
-                if selectedTemplate == nil {
-                    photoCountSelector
-                }
-                
-                // Vista principal
-                if selectedTemplate == nil {
-                    // Mostrar plantillas disponibles
-                    templateSelectionView
+            Group {
+                // Si estamos editando una foto, mostrar PhotoEditorView directamente
+                if let collageImage = collageImageForEditing {
+                    PhotoEditorView(initialImage: collageImage)
+                        .environmentObject(photoManager)
+                } else if showingPhotoEditor && selectedPhotoCount == 1 && selectedSingleImage != nil {
+                    PhotoEditorView(initialImage: selectedSingleImage!)
+                        .environmentObject(photoManager)
                 } else {
-                    // Mostrar editor de collage
-                    collageEditorView
+                    // Vista normal con ZStack y fondo
+                    ZStack {
+                        // Fondo de la aplicación
+                        Image("Background")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .ignoresSafeArea()
+                        
+                        VStack(spacing: 0) {
+                            // Selector de número de fotos (no mostrar cuando se está editando 1 foto con imagen seleccionada)
+                            if selectedTemplate == nil && !(showingPhotoEditor && selectedPhotoCount == 1 && selectedSingleImage != nil) {
+                                photoCountSelector
+                            }
+                            
+                            // Vista principal
+                            if showingPhotoEditor && selectedPhotoCount == 1 {
+                                // Mostrar pantalla de selección de foto (como PhotoEditorView)
+                                singlePhotoSelectionView
+                            } else if selectedTemplate == nil {
+                                // Mostrar plantillas disponibles (para 2-6 fotos)
+                                templateSelectionView
+                            } else {
+                                // Mostrar editor de collage
+                                collageEditorView
+                            }
+                        }
+                    }
                 }
             }
-            .navigationTitle(selectedTemplate == nil ? "Crear Collage" : "")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Botón para cambiar plantilla (solo cuando hay una seleccionada)
-                if selectedTemplate != nil {
+                // Botón para volver
+                if collageImageForEditing != nil || selectedTemplate != nil || (showingPhotoEditor && selectedSingleImage != nil) {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button(action: {
-                            selectedTemplate = nil
-                            selectedImages = []
+                            if collageImageForEditing != nil {
+                                // Volver desde editor de collage
+                                collageImageForEditing = nil
+                                selectedTemplate = nil
+                                selectedImages = []
+                            } else if showingPhotoEditor && selectedSingleImage != nil {
+                                // Volver desde editor de 1 foto (con imagen) - mantener en modo 1 foto
+                                selectedSingleImage = nil
+                                // No cambiar showingPhotoEditor para mantener la pantalla de selección
+                            } else {
+                                selectedTemplate = nil
+                                selectedImages = []
+                            }
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "arrow.left")
-                                Text("Cambiar plantilla")
+                                Text(collageImageForEditing != nil ? "Volver" : "Volver")
                             }
                             .foregroundColor(.blue)
                         }
@@ -51,14 +87,25 @@ struct CollageView: View {
             }
         }
         .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(selectedImage: Binding(
-                get: { selectedImages[safe: currentImageIndex] ?? nil },
-                set: { newImage in
-                    if let image = newImage {
-                        selectedImages[currentImageIndex] = image
+            if selectedPhotoCount == 1 {
+                // Selector para foto única (va al editor completo)
+                ImagePicker(selectedImage: Binding(
+                    get: { selectedSingleImage },
+                    set: { newImage in
+                        selectedSingleImage = newImage
                     }
-                }
-            ))
+                ))
+            } else {
+                // Selector para collage
+                ImagePicker(selectedImage: Binding(
+                    get: { selectedImages[safe: currentImageIndex] ?? nil },
+                    set: { newImage in
+                        if let image = newImage {
+                            selectedImages[currentImageIndex] = image
+                        }
+                    }
+                ))
+            }
         }
         .overlay(
             Group {
@@ -87,31 +134,117 @@ struct CollageView: View {
     
     // MARK: - Photo Count Selector
     private var photoCountSelector: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(photoCountOptions, id: \.self) { count in
-                    Button(action: {
-                        selectedPhotoCount = count
-                        selectedTemplate = nil
-                        selectedImages = []
-                    }) {
-                        VStack(spacing: 4) {
-                            Text("\(count)")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Text("fotos")
-                                .font(.caption2)
-                        }
-                        .frame(width: 70, height: 60)
-                        .background(selectedPhotoCount == count ? Color.blue : Color.gray.opacity(0.2))
-                        .foregroundColor(selectedPhotoCount == count ? .white : .primary)
-                        .cornerRadius(12)
+        HStack(spacing: 8) {
+            ForEach(photoCountOptions, id: \.self) { count in
+                Button(action: {
+                    selectedPhotoCount = count
+                    selectedTemplate = nil
+                    selectedImages = []
+                    selectedSingleImage = nil
+                    
+                    // Si selecciona 1 foto, mostrar pantalla de selección
+                    if count == 1 {
+                        showingPhotoEditor = true
+                        // No abrir selector automáticamente
+                    } else {
+                        showingPhotoEditor = false
                     }
+                }) {
+                    VStack(spacing: 2) {
+                        Text("\(count)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                        Text(count == 1 ? "foto" : "fotos")
+                            .font(.caption2)
+                    }
+                    .frame(width: 50, height: 45)
+                    .background(selectedPhotoCount == count ? Color.blue : Color.gray.opacity(0.2))
+                    .foregroundColor(selectedPhotoCount == count ? .white : .primary)
+                    .cornerRadius(8)
                 }
             }
-            .padding()
         }
-        .background(Color(.systemBackground))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.clear)
+    }
+    
+    // MARK: - Single Photo Selection View
+    private var singlePhotoSelectionView: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            
+            VStack(spacing: 20) {
+                // Logo más pequeño y centrado
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 120, height: 120)
+                
+                // Texto principal
+                Text("Elige tu foto más taquillera")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+                
+                // Botón de selección de foto
+                Button(action: {
+                    showingImagePicker = true
+                }) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.pink)
+                        
+                        Text("Seleccionar foto")
+                            .font(.headline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.primary)
+                    .padding(.horizontal, 30)
+                    .padding(.vertical, 15)
+                    .background(
+                        RoundedRectangle(cornerRadius: 25)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                    )
+                }
+            }
+            
+            Spacer()
+            
+            // Texto de descripción
+            Text("Taquilla es una app que periódicamente actualiza sus diseños, totalmente gratuita, diseñada en Chile con ❤️")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+                .padding(.bottom, 30)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
+        .onTapGesture {
+            // Toda el área es clickeable
+            showingImagePicker = true
+        }
+    }
+    
+    // MARK: - Empty State View
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("Selecciona una foto...")
+                .font(.headline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.clear)
     }
     
     // MARK: - Template Selection View
@@ -129,8 +262,10 @@ struct CollageView: View {
                         }
                 }
             }
-            .padding()
+            .padding(.horizontal, 60)
+            .padding(.vertical, 20)
         }
+        .padding(.horizontal, 0) // Asegurar que el ScrollView no tenga padding adicional
     }
     
     // MARK: - Collage Editor View
@@ -152,12 +287,12 @@ struct CollageView: View {
                         .padding()
                     }
                     
-                    // Botón de guardar
+                    // Botón para continuar editando
                     if selectedImages.compactMap({ $0 }).count == selectedPhotoCount {
-                        Button(action: saveCollage) {
+                        Button(action: continueToEditor) {
                             HStack {
-                                Image(systemName: "square.and.arrow.down")
-                                Text("Guardar Collage")
+                                Image(systemName: "arrow.right.circle.fill")
+                                Text("Continuar editando")
                             }
                             .font(.headline)
                             .foregroundColor(.white)
@@ -179,15 +314,22 @@ struct CollageView: View {
         selectedImages = Array(repeating: nil, count: template.photoCount)
     }
     
-    private func saveCollage() {
+    private func continueToEditor() {
         guard let template = selectedTemplate else { return }
         
+        // Crear la imagen del collage
+        let collageImage = createCollageImage(template: template)
+        
+        // Pasar al editor con la imagen del collage
+        collageImageForEditing = collageImage
+    }
+    
+    private func createCollageImage(template: CollageTemplate) -> UIImage {
         // Crear imagen del collage en formato 3:4 (1080x1440)
-        // Más grande que cuadrado, menos vertical que Stories
         let size = CGSize(width: 1080, height: 1440)
         let renderer = UIGraphicsImageRenderer(size: size)
         
-        let collageImage = renderer.image { context in
+        return renderer.image { context in
             // Fondo gris oscuro (en lugar de gradiente claro)
             let backgroundColor = UIColor(red: 0.20, green: 0.20, blue: 0.22, alpha: 1.0) // Gris oscuro
             backgroundColor.setFill()
@@ -281,29 +423,6 @@ struct CollageView: View {
                     
                     context.cgContext.restoreGState() // Restaurar clip
                     context.cgContext.restoreGState() // Restaurar estado general
-                }
-            }
-        }
-        
-        // Guardar usando PhotoManager
-        photoManager.savePhoto(collageImage) { success in
-            if success {
-                // Mostrar mensaje de éxito
-                withAnimation {
-                    showingSaveSuccess = true
-                }
-                
-                // Ocultar mensaje después de 2 segundos
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    withAnimation {
-                        showingSaveSuccess = false
-                    }
-                }
-                
-                // Reset después del mensaje
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                    selectedTemplate = nil
-                    selectedImages = []
                 }
             }
         }
@@ -435,8 +554,8 @@ struct CollagePreviewView: View {
                                             .foregroundColor(.gray)
                                         Text("Toca para\nagregar")
                                             .font(.system(size: min(frameRect.width, frameRect.height) * 0.08))
-                                            .foregroundColor(.gray)
-                                            .multilineTextAlignment(.center)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
                                     }
                                 )
                         }

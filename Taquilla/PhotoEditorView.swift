@@ -63,33 +63,6 @@ struct PhotoEditorView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-            // Botones en la parte superior (solo cuando hay imagen)
-            if selectedImage != nil {
-              HStack {
-                Spacer()
-                
-                // Botones de compartir y guardar en la esquina superior derecha
-                HStack(spacing: 12) {
-                  // Botón de compartir
-                  Button(action: { shareToInstagramStory() }) {
-                    Image(systemName: "square.and.arrow.up")
-                      .font(.title3)
-                      .foregroundColor(.white)
-                  }
-                  
-                  // Botón guardar
-                  Button(action: { saveImage() }) {
-                    Image(systemName: "square.and.arrow.down")
-                      .font(.title3)
-                      .foregroundColor(.white)
-                  }
-                }
-              }
-              .frame(maxWidth: .infinity)
-              .frame(height: 32)
-              .padding(.horizontal, 16)
-              .padding(.top, 4)
-            }
 
                 GeometryReader { geometry in
                   if let image = displayImage {
@@ -343,6 +316,27 @@ struct PhotoEditorView: View {
                 .padding(.vertical, 16)
             }
             }
+      }
+      .toolbar {
+        if selectedImage != nil {
+          ToolbarItem(placement: .navigationBarTrailing) {
+            HStack(spacing: 16) {
+              // Botón de compartir
+              Button(action: { shareToInstagramStory() }) {
+                Image(systemName: "square.and.arrow.up")
+                  .font(.title3)
+                  .foregroundColor(.white)
+              }
+              
+              // Botón guardar
+              Button(action: { saveImage() }) {
+                Image(systemName: "square.and.arrow.down")
+                  .font(.title3)
+                  .foregroundColor(.white)
+              }
+            }
+          }
+        }
       }
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(selectedImage: $selectedImage)

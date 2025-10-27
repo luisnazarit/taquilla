@@ -251,17 +251,26 @@ struct PhotoEditorView: View {
           if selectedImage != nil {
                 VStack(spacing: 16) {
                     HStack(spacing: 20) {
-                Button(action: { showingFontMenu = true }) {
+                Button(action: { 
+                  // Cerrar otros paneles antes de abrir texto
+                  showingFilterPicker = false
+                  showingTemplatePicker = false
+                  showingFontMenu = true 
+                }) {
                             VStack {
                     Image(systemName: "text.badge.plus")
                                     .font(.title2)
                     Text("Texto")
                                     .font(.caption)
                             }
-                  .foregroundColor(.white)
+                  .foregroundColor(showingFontMenu ? .white : .white.opacity(0.6))
                 }
 
                 Button(action: {
+                  // Cerrar otros paneles antes de abrir curvo
+                  showingFilterPicker = false
+                  showingTemplatePicker = false
+                  showingFontMenu = false
                   isDrawingMode = true
                   drawingMode = .none
                   currentDrawingPath = []
@@ -272,30 +281,44 @@ struct PhotoEditorView: View {
                     Text("Curvo")
                       .font(.caption)
                   }
-                  .foregroundColor(.white)
+                  .foregroundColor(isDrawingMode ? .white : .white.opacity(0.6))
                 }
 
-                Button(action: { showingFilterPicker.toggle() }) {
+                Button(action: { 
+                  // Cerrar otros paneles antes de abrir filtros
+                  showingTemplatePicker = false
+                  showingFontMenu = false
+                  showingFilterPicker.toggle() 
+                }) {
                             VStack {
                                 Image(systemName: "slider.horizontal.3")
                                     .font(.title2)
                                 Text("Filtros")
                                     .font(.caption)
                             }
-                  .foregroundColor(.white)
+                  .foregroundColor(showingFilterPicker ? .white : .white.opacity(0.6))
                         }
                         
-                Button(action: { showingTemplatePicker.toggle() }) {
+                Button(action: { 
+                  // Cerrar otros paneles antes de abrir plantillas
+                  showingFilterPicker = false
+                  showingFontMenu = false
+                  showingTemplatePicker.toggle() 
+                }) {
                             VStack {
                     Image(systemName: "square.grid.2x2")
                                     .font(.title2)
                     Text("Plantillas")
                                     .font(.caption)
                             }
-                  .foregroundColor(.white)
+                  .foregroundColor(showingTemplatePicker ? .white : .white.opacity(0.6))
                         }
                         
                 Button(action: { 
+                  // Cerrar otros paneles antes de abrir stickers
+                  showingFilterPicker = false
+                  showingTemplatePicker = false
+                  showingFontMenu = false
                   showingStickerPicker = true
                 }) {
                             VStack {
@@ -304,9 +327,13 @@ struct PhotoEditorView: View {
                     Text("Stickers")
                                     .font(.caption)
                             }
-                  .foregroundColor(.white)
+                  .foregroundColor(showingStickerPicker ? .white : .white.opacity(0.6))
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Color.black.opacity(0.3))
+                    .cornerRadius(12)
                     
                     if showingFilterPicker {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -338,11 +365,11 @@ struct PhotoEditorView: View {
                         if isLoadingTemplate {
                           ProgressView()
                             .scaleEffect(0.8)
-                            .foregroundColor(.orange)
+                            .foregroundColor(.white)
                         } else {
                           Image(systemName: "cloud.sun.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(.orange)
+                            .foregroundColor(.white)
                         }
                         Text("Clima y\nUbicación")
                           .font(.caption2)
@@ -364,11 +391,11 @@ struct PhotoEditorView: View {
                         if isLoadingTemplate {
                           ProgressView()
                             .scaleEffect(0.8)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.white)
                         } else {
                           Image(systemName: "mappin.and.ellipse")
                             .font(.system(size: 32))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.white)
                         }
                         Text("Ubicación")
                           .font(.caption2)
@@ -383,7 +410,7 @@ struct PhotoEditorView: View {
                   }
                   .padding(.horizontal)
                 }
-                .padding(.bottom, 80)  // Padding para no tapar la navegación inferior
+                .padding(.bottom, 20)  // Padding reducido para mejor layout
               }
             }
             .padding(.horizontal, 20)

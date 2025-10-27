@@ -435,6 +435,7 @@ struct PhotoEditorView: View {
                     }
                   }
                 )
+                .clipped()
             } else {
               emptyStateView
                     }

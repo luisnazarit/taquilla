@@ -35,6 +35,7 @@ struct PhotoEditorView: View {
   @State private var editingCurvedText = ""
   @State private var currentDrawnPath: [CGPoint] = []
   @State private var selectedCurvedTextIndex: Int? = nil
+  @State private var currentCurvedTextFontStyle: FontStyle? = nil
 
   // Template states
   @State private var showingTemplatePicker = false
@@ -63,19 +64,201 @@ struct PhotoEditorView: View {
     
     var body: some View {
         NavigationView {
-                ZStack {
-        // Fondo de la aplicación
-        Image("Background")
-          .resizable()
-          .aspectRatio(contentMode: .fill)
-          .ignoresSafeArea()
+            mainContentView
+        }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(selectedImage: $selectedImage)
+        }
+        .sheet(isPresented: $showingFontMenu) {
+            FontMenuView { fontStyle in
+                currentFontStyle = fontStyle
+                print("🎨 Fuente seleccionada en el menú: \(fontStyle.customFontName ?? "sistema")")
+                showingFontMenu = false
+                editingText = ""
+                
+                // Usar un pequeño delay para asegurar que currentFontStyle se actualice antes de abrir el editor
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    showingTextEditor = true
+                }
+            }
+        }
+        .sheet(isPresented: $showingTextEditor) {
+            textEditorSheet
+        }
+        .sheet(isPresented: $showingCurvedTextEditor) {
+            curvedTextEditorSheet
+        }
+        .sheet(isPresented: $showingStickerPicker) {
+            StickerPickerSheetView(
+                availableStickers: availableStickers,
+                isLoadingStickers: $isLoadingStickers,
+                onStickerSelected: { stickerInfo in
+                    let newSticker = StickerElement(
+                        imageName: stickerInfo.name,
+                        imageURL: stickerInfo.url,
+                        position: CGPoint(x: displayedImageSize.width * 0.5, y: displayedImageSize.height * 0.5),
+                        scale: 1.0,
+                        rotation: 0.0,
+                        zIndex: nextZIndex
+                    )
+                    stickerElements.append(newSticker)
+                    nextZIndex += 1
+                    showingStickerPicker = false
+                },
+                onLoadStickers: {
+                    Task {
+                        isLoadingStickers = true
+                        availableStickers = await StickerManager.shared.loadAvailableStickers()
+                        isLoadingStickers = false
+                    }
+                }
+            )
+        }
+        .overlay(
+            Group {
+                if showingSaveSuccess {
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                                .font(.title)
+                            Text("¡Foto guardada!")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                        }
+                        .padding()
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(10)
+                        Spacer()
+                    }
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showingSaveSuccess = false
+                        }
+                    }
+                }
+            }
+        )
+    }
+    
+    // MARK: - Sheet Views
+    @ViewBuilder
+    private var textEditorSheet: some View {
+        if let fontStyle = currentFontStyle {
+            TextInputView(
+                text: $editingText,
+                fontStyle: fontStyle,
+                onDone: {
+                    if !editingText.isEmpty {
+                        if let selectedElement = selectedTextElement,
+                            let index = textElements.firstIndex(where: { $0.id == selectedElement.id })
+                        {
+                            textElements[index].text = editingText
+                        } else {
+                            let newElement = TextElement(
+                                text: editingText,
+                                position: CGPoint(x: UIScreen.main.bounds.width / 2, y: 200),
+                                fontSize: fontStyle.size,
+                                fontWeight: fontStyle.weight,
+                                color: fontStyle.color,
+                                customFontName: fontStyle.customFontName,
+                                shadows: fontStyle.shadows.map {
+                                    TextShadow(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
+                                },
+                                backgroundOpacity: fontStyle.backgroundOpacity,
+                                cornerRadius: fontStyle.cornerRadius
+                            )
+                            textElements.append(newElement)
+                        }
+                    }
+                    editingText = ""
+                    selectedTextElement = nil
+                    currentFontStyle = nil
+                    showingTextEditor = false
+                },
+                onCancel: {
+                    editingText = ""
+                    selectedTextElement = nil
+                    currentFontStyle = nil
+                    showingTextEditor = false
+                }
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var curvedTextEditorSheet: some View {
+        CurvedTextInputView(
+            text: $editingCurvedText,
+            path: currentDrawnPath,
+            onDone: { selectedFontStyle in
+                if !editingCurvedText.isEmpty && !currentDrawnPath.isEmpty {
+                    // Calcular el tamaño de fuente óptimo basado en la longitud de la línea
+                    let pathLength = PathUtilities.pathLength(currentDrawnPath)
+                    let optimalFontSize = calculateOptimalFontSize(
+                        for: editingCurvedText,
+                        pathLength: pathLength
+                    )
 
-        VStack(spacing: 0) {
-          GeometryReader { geometry in
-            if let image = displayImage {
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                    if let index = selectedCurvedTextIndex {
+                        // Editar texto curvo existente - actualizar todas las propiedades de fuente
+                        curvedTextElements[index].text = editingCurvedText
+                        curvedTextElements[index].fontSize = optimalFontSize
+                        curvedTextElements[index].fontWeight = selectedFontStyle?.weight ?? curvedTextElements[index].fontWeight
+                        curvedTextElements[index].color = selectedFontStyle?.color ?? curvedTextElements[index].color
+                        curvedTextElements[index].customFontName = selectedFontStyle?.customFontName
+                        print("🎨 Editando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
+                    } else {
+                        // Crear nuevo texto curvo con fuente personalizada si está disponible
+                        print("🎨 Creando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
+                        let newCurvedText = CurvedTextElement(
+                            text: editingCurvedText,
+                            path: currentDrawnPath,
+                            fontSize: optimalFontSize,
+                            fontWeight: selectedFontStyle?.weight ?? .semibold,
+                            color: selectedFontStyle?.color ?? .white,
+                            customFontName: selectedFontStyle?.customFontName
+                        )
+                        print("✅ Texto curvo creado con customFontName: \(newCurvedText.customFontName ?? "nil")")
+                        curvedTextElements.append(newCurvedText)
+                    }
+                }
+                editingCurvedText = ""
+                currentDrawnPath = []
+                currentDrawingPath = []
+                drawingMode = .none
+                selectedCurvedTextIndex = nil
+                currentCurvedTextFontStyle = nil
+                showingCurvedTextEditor = false
+            },
+            onCancel: {
+                editingCurvedText = ""
+                currentDrawnPath = []
+                currentDrawingPath = []
+                drawingMode = .none
+                selectedCurvedTextIndex = nil
+                currentCurvedTextFontStyle = nil
+                showingCurvedTextEditor = false
+            },
+            initialFontStyle: currentCurvedTextFontStyle
+        )
+    }
+    
+    private var mainContentView: some View {
+        ZStack {
+            // Fondo de la aplicación
+            Image("Background")
+              .resizable()
+              .aspectRatio(contentMode: .fill)
+              .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+              GeometryReader { geometry in
+                if let image = displayImage {
+                            Image(uiImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                   GeometryReader { imageGeometry in
@@ -155,6 +338,17 @@ struct PhotoEditorView: View {
                           }) {
                             editingCurvedText = curvedText.text
                             currentDrawnPath = curvedText.path
+                            // Crear FontStyle basado en el texto curvo actual
+                            currentCurvedTextFontStyle = FontStyle(
+                              name: curvedText.customFontName ?? "Default",
+                              size: curvedText.fontSize,
+                              weight: curvedText.fontWeight,
+                              color: curvedText.color,
+                              customFontName: curvedText.customFontName,
+                              shadows: [],
+                              backgroundOpacity: 0,
+                              cornerRadius: 0
+                            )
                             showingCurvedTextEditor = true
                             // Guardamos el índice para actualizar después
                             selectedCurvedTextIndex = index
@@ -439,222 +633,50 @@ struct PhotoEditorView: View {
           }
         }
       }
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(selectedImage: $selectedImage)
-            }
-      .sheet(isPresented: $showingFontMenu) {
-        FontMenuView { fontStyle in
-          currentFontStyle = fontStyle
-          print("🎨 Fuente seleccionada en el menú: \(fontStyle.customFontName ?? "sistema")")
-          showingFontMenu = false
-          editingText = ""
+    }
+    
+    // Vista de estado vacío (sin imagen)
+    private var emptyStateView: some View {
+        Button(action: { showingImagePicker = true }) {
+            VStack(spacing: 10) {
+                Spacer()
 
-          // Usar un pequeño delay para asegurar que currentFontStyle se actualice antes de abrir el editor
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            showingTextEditor = true
-          }
-        }
-      }
-      .sheet(
-        item: Binding(
-          get: {
-            showingTextEditor
-              ? (currentFontStyle
-                ?? FontStyle(
-                  name: "Default",
-                  size: 32,
-                  weight: .regular,
-                  color: .white,
-                  customFontName: nil,
-                  shadows: [],
-                  backgroundOpacity: 0.3,
-                  cornerRadius: 8
-                )) : nil
-          },
-          set: { _ in }
-        )
-      ) { fontStyle in
-        let _ = print("📋 Abriendo editor con fuente: \(fontStyle.customFontName ?? "sistema")")
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 180)
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 40)
 
-        TextInputView(
-          text: $editingText,
-          fontStyle: fontStyle,
-          onDone: {
-            if !editingText.isEmpty {
-              if let selectedElement = selectedTextElement,
-                let index = textElements.firstIndex(where: { $0.id == selectedElement.id })
-              {
-                textElements[index].text = editingText
-              } else {
-                let newElement = TextElement(
-                  text: editingText,
-                  position: CGPoint(x: UIScreen.main.bounds.width / 2, y: 200),
-                  fontSize: fontStyle.size,
-                  fontWeight: fontStyle.weight,
-                  color: fontStyle.color,
-                  customFontName: fontStyle.customFontName,
-                  shadows: fontStyle.shadows.map {
-                    TextShadow(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
-                  },
-                  backgroundOpacity: fontStyle.backgroundOpacity,
-                  cornerRadius: fontStyle.cornerRadius
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 50))
+                    .foregroundColor(Color(red: 1.0, green: 0.0, blue: 1.0))
+
+                Text("Seleccionar una foto")
+                    .font(.headline)
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.bottom, 5)
+
+                Text("Elige tu foto más taquillera")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.5))
+
+                Spacer()
+
+                Text(
+                    "Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con <3"
                 )
-                textElements.append(newElement)
-              }
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.4))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 30)
+                .padding(.bottom, 40)
             }
-            editingText = ""
-            selectedTextElement = nil
-            currentFontStyle = nil
-            showingTextEditor = false
-          },
-          onCancel: {
-            editingText = ""
-            selectedTextElement = nil
-            currentFontStyle = nil
-            showingTextEditor = false
-          }
-        )
-      }
-      .sheet(isPresented: $showingCurvedTextEditor) {
-        CurvedTextInputView(
-          text: $editingCurvedText,
-          path: currentDrawnPath,
-          onDone: {
-            if !editingCurvedText.isEmpty && !currentDrawnPath.isEmpty {
-              // Calcular el tamaño de fuente óptimo basado en la longitud de la línea
-              let pathLength = PathUtilities.pathLength(currentDrawnPath)
-              let optimalFontSize = calculateOptimalFontSize(
-                for: editingCurvedText,
-                pathLength: pathLength
-              )
-
-              if let index = selectedCurvedTextIndex {
-                // Editar texto curvo existente
-                curvedTextElements[index].text = editingCurvedText
-                // Mantener el mismo path, fontSize, etc.
-              } else {
-                // Crear nuevo texto curvo
-                let newCurvedText = CurvedTextElement(
-                  text: editingCurvedText,
-                  path: currentDrawnPath,
-                  fontSize: optimalFontSize,
-                  fontWeight: .semibold,
-            color: .white
-        )
-                curvedTextElements.append(newCurvedText)
-              }
-            }
-            editingCurvedText = ""
-            currentDrawnPath = []
-            currentDrawingPath = []
-            drawingMode = .none
-            selectedCurvedTextIndex = nil
-            showingCurvedTextEditor = false
-          },
-          onCancel: {
-            editingCurvedText = ""
-            currentDrawnPath = []
-            currentDrawingPath = []
-            drawingMode = .none
-            selectedCurvedTextIndex = nil
-            showingCurvedTextEditor = false
-          }
-        )
-      }
-      .sheet(isPresented: $showingStickerPicker) {
-        StickerPickerSheetView(
-          availableStickers: availableStickers,
-          isLoadingStickers: $isLoadingStickers,
-          onStickerSelected: { stickerInfo in
-            let newSticker = StickerElement(
-              imageName: stickerInfo.name,
-              imageURL: stickerInfo.url,
-              position: CGPoint(x: displayedImageSize.width * 0.5, y: displayedImageSize.height * 0.5),
-              scale: 1.0,
-              rotation: 0.0,
-              zIndex: nextZIndex
-            )
-            stickerElements.append(newSticker)
-            nextZIndex += 1
-            showingStickerPicker = false
-          },
-          onLoadStickers: {
-            Task {
-              isLoadingStickers = true
-              availableStickers = await StickerManager.shared.loadAvailableStickers()
-              isLoadingStickers = false
-            }
-          }
-        )
-      }
-      .overlay(
-        Group {
-          if showingSaveSuccess {
-            VStack {
-              Spacer()
-              HStack {
-                Image(systemName: "checkmark.circle.fill")
-                  .foregroundColor(.green)
-                  .font(.title2)
-                Text("Imagen guardada exitosamente")
-                  .foregroundColor(.white)
-                  .fontWeight(.semibold)
-              }
-              .padding()
-              .background(Color.black.opacity(0.8))
-              .cornerRadius(12)
-              .padding(.bottom, 50)
-            }
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-            .animation(.spring(), value: showingSaveSuccess)
-          }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .contentShape(Rectangle())
         }
-      )
+        .buttonStyle(PlainButtonStyle())
     }
-  }
-
-  // Vista de estado vacío (sin imagen)
-  private var emptyStateView: some View {
-    Button(action: { showingImagePicker = true }) {
-      VStack(spacing: 10) {
-        Spacer()
-
-        Image("Logo")
-          .resizable()
-          .scaledToFit()
-          .frame(width: 180)
-          .padding(.horizontal, 40)
-          .padding(.bottom, 40)
-
-        Image(systemName: "plus.circle")
-          .font(.system(size: 50))
-          .foregroundColor(Color(red: 1.0, green: 0.0, blue: 1.0))
-
-        Text("Seleccionar una foto")
-          .font(.headline)
-          .foregroundColor(.white.opacity(0.7))
-          .padding(.bottom, 5)
-
-        Text("Elige tu foto más taquillera")
-          .font(.caption)
-          .foregroundColor(.white.opacity(0.5))
-
-        Spacer()
-
-        Text(
-          "Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con <3"
-        )
-        .font(.caption)
-        .foregroundColor(.white.opacity(0.4))
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 30)
-        .padding(.bottom, 40)
-      }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .contentShape(Rectangle())
-    }
-    .buttonStyle(PlainButtonStyle())
-  }
 
   func saveImage() {
     guard let image = displayImage else { return }
@@ -967,7 +989,18 @@ struct PhotoEditorView: View {
     let uiFontWeight = convertToUIFontWeight(curvedText.fontWeight)
     // Aplicar la escala al fontSize y al scale del elemento
     let scaledFontSize = curvedText.fontSize * curvedText.scale * scale
-    let font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
+    
+    // Usar fuente personalizada si está disponible, sino fuente del sistema
+    let font: UIFont
+    print("🎨 drawCurvedText: customFontName = \(curvedText.customFontName ?? "nil")")
+    if let customFontName = curvedText.customFontName,
+       let customFont = UIFont(name: customFontName, size: scaledFontSize) {
+      font = customFont
+      print("✅ drawCurvedText: Usando fuente personalizada \(customFontName)")
+    } else {
+      font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
+      print("❌ drawCurvedText: Usando fuente del sistema (customFontName: \(curvedText.customFontName ?? "nil"))")
+    }
     let characters = Array(curvedText.text)
     let textCount = CGFloat(characters.count)
     guard textCount > 0 else { return }

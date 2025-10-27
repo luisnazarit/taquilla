@@ -15,7 +15,9 @@ struct CurvedTextView: View {
       ForEach(Array(curvedText.text.enumerated()), id: \.offset) { index, character in
         if let letterInfo = calculateLetterPosition(for: index) {
           Text(String(character))
-            .font(.system(size: curvedText.fontSize * curvedText.scale, weight: curvedText.fontWeight))
+            .font(curvedText.customFontName != nil 
+                  ? .custom(curvedText.customFontName!, size: curvedText.fontSize * curvedText.scale)
+                  : .system(size: curvedText.fontSize * curvedText.scale, weight: curvedText.fontWeight))
             .foregroundColor(curvedText.color)
             .rotationEffect(Angle(radians: Double(letterInfo.angle)), anchor: .center)
             .position(
@@ -93,7 +95,13 @@ struct CurvedTextView: View {
     guard textCount > 0 else { return nil }
     
     // Calcular ancho real del texto para usarlo como base
-    let font = UIFont.systemFont(ofSize: curvedText.fontSize, weight: convertToUIFontWeight(curvedText.fontWeight))
+    let font: UIFont
+    if let customFontName = curvedText.customFontName,
+       let customFont = UIFont(name: customFontName, size: curvedText.fontSize) {
+      font = customFont
+    } else {
+      font = UIFont.systemFont(ofSize: curvedText.fontSize, weight: convertToUIFontWeight(curvedText.fontWeight))
+    }
     let fullText = curvedText.text as NSString
     let attributes: [NSAttributedString.Key: Any] = [.font: font]
     let textWidth = fullText.size(withAttributes: attributes).width

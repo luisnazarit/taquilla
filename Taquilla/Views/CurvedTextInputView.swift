@@ -3,11 +3,23 @@ import SwiftUI
 struct CurvedTextInputView: View {
   @Binding var text: String
   let path: [CGPoint]
-  let onDone: () -> Void
+  let onDone: (FontStyle?) -> Void
   let onCancel: () -> Void
+  let initialFontStyle: FontStyle? // Fuente inicial para edición
   @FocusState private var isFocused: Bool
+  @State private var selectedFontStyle: FontStyle?
+  @State private var showingFontMenu = false
   
   private let maxCharacters = 50
+  
+  // Inicializador personalizado
+  init(text: Binding<String>, path: [CGPoint], onDone: @escaping (FontStyle?) -> Void, onCancel: @escaping () -> Void, initialFontStyle: FontStyle? = nil) {
+    self._text = text
+    self.path = path
+    self.onDone = onDone
+    self.onCancel = onCancel
+    self.initialFontStyle = initialFontStyle
+  }
   
   var remainingCharacters: Int {
     maxCharacters - text.count
@@ -46,6 +58,23 @@ struct CurvedTextInputView: View {
             }
           }
         
+        // Botón para seleccionar fuente
+        Button(action: {
+          showingFontMenu = true
+        }) {
+          HStack {
+            Image(systemName: "textformat")
+              .font(.title2)
+            Text(selectedFontStyle?.name ?? "Seleccionar fuente")
+              .font(.body)
+          }
+          .foregroundColor(.white)
+          .padding(.horizontal, 20)
+          .padding(.vertical, 12)
+          .background(Color.white.opacity(0.2))
+          .cornerRadius(8)
+        }
+        
         Text("\(remainingCharacters) caracteres restantes")
           .font(.caption)
           .foregroundColor(remainingCharacters < 10 ? .red : .white.opacity(0.7))
@@ -66,7 +95,7 @@ struct CurvedTextInputView: View {
         }
         ToolbarItem(placement: .navigationBarTrailing) {
           Button("Listo") {
-            onDone()
+            onDone(selectedFontStyle)
           }
           .foregroundColor(.white)
           .fontWeight(.bold)
@@ -77,6 +106,17 @@ struct CurvedTextInputView: View {
       .toolbarBackground(.visible, for: .navigationBar)
       .onAppear {
         isFocused = true
+        // Establecer la fuente inicial si está disponible
+        if let initialFont = initialFontStyle {
+          selectedFontStyle = initialFont
+        }
+      }
+      .sheet(isPresented: $showingFontMenu) {
+        FontMenuView { fontStyle in
+          selectedFontStyle = fontStyle
+          print("🎨 CurvedTextInputView: Fuente seleccionada: \(fontStyle.customFontName ?? "nil")")
+          showingFontMenu = false
+        }
       }
     }
   }

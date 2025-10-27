@@ -34,6 +34,7 @@ struct CurvedTextElement: Identifiable {
   var color: Color
   var scale: CGFloat = 1.0
   var offset: CGSize = .zero
+  var customFontName: String? = nil  // Nombre de la fuente personalizada
 
   // Hacer mutable el struct completo
   mutating func updateText(_ newText: String) {

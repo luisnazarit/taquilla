@@ -7,7 +7,7 @@ struct PhotoEditorView: View {
   @StateObject private var locationManager = LocationManager()
   @EnvironmentObject var photoManager: PhotoManager
 
-  @State private var selectedImage: UIImage?
+    @State private var selectedImage: UIImage?
 
   // Inicializador para permitir imagen inicial
   init(initialImage: UIImage? = nil) {
@@ -15,12 +15,12 @@ struct PhotoEditorView: View {
       _selectedImage = State(initialValue: image)
     }
   }
-  @State private var showingImagePicker = false
-  @State private var currentFilter: PhotoFilter = .none
-  @State private var textElements: [TextElement] = []
-  @State private var selectedTextElement: TextElement?
-  @State private var showingTextEditor = false
-  @State private var showingFilterPicker = false
+    @State private var showingImagePicker = false
+    @State private var currentFilter: PhotoFilter = .none
+    @State private var textElements: [TextElement] = []
+    @State private var selectedTextElement: TextElement?
+    @State private var showingTextEditor = false
+    @State private var showingFilterPicker = false
   @State private var showingFontMenu = false
   @State private var editingText = ""
   @State private var showingKeyboard = false
@@ -48,10 +48,6 @@ struct PhotoEditorView: View {
   @State private var availableStickers: [StickerInfo] = []
   @State private var nextZIndex = 0
   @State private var isLoadingStickers = false
-  
-  // Drag-to-trash states
-  @State private var isDraggingSticker = false
-  @State private var draggedStickerId: UUID? = nil
 
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -64,10 +60,10 @@ struct PhotoEditorView: View {
     guard let image = selectedImage else { return nil }
     return currentFilter.apply(to: image)
   }
-
-  var body: some View {
-    NavigationView {
-      ZStack {
+    
+    var body: some View {
+        NavigationView {
+                ZStack {
         // Fondo de la aplicación
         Image("Background")
           .resizable()
@@ -77,9 +73,9 @@ struct PhotoEditorView: View {
         VStack(spacing: 0) {
           GeometryReader { geometry in
             if let image = displayImage {
-              Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                   GeometryReader { imageGeometry in
@@ -91,10 +87,10 @@ struct PhotoEditorView: View {
                     }
                   }
                 )
-                .overlay(
+                            .overlay(
                   ZStack {
                     // Textos rectos normales
-                    ForEach(textElements) { textElement in
+                                ForEach(textElements) { textElement in
                       TextElementView(
                         textElement: textElement,
                         onDrag: { translation in
@@ -112,7 +108,7 @@ struct PhotoEditorView: View {
                           }
                         },
                         onTap: {
-                          selectedTextElement = textElement
+                                            selectedTextElement = textElement
                           editingText = textElement.text
                           // Restaurar el fontStyle basado en el textElement
                           currentFontStyle = FontStyle(
@@ -127,9 +123,9 @@ struct PhotoEditorView: View {
                             backgroundOpacity: textElement.backgroundOpacity,
                             cornerRadius: textElement.cornerRadius
                           )
-                          showingTextEditor = true
-                        }
-                      )
+                                            showingTextEditor = true
+                                        }
+                                )
                     }
 
                     // Textos curvos
@@ -180,7 +176,7 @@ struct PhotoEditorView: View {
                         onScale: { scale in
                           if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
                             let newScale = sticker.scale * scale
-                            stickerElements[index].scale = min(max(newScale, 0.3), 4.0)
+                            stickerElements[index].scale = min(max(newScale, 0.8), 2.5)
                           }
                         },
                         onRotation: { rotation in
@@ -189,49 +185,10 @@ struct PhotoEditorView: View {
                           }
                         },
                         onDelete: {
+                          print("🗑️ onDelete called - removing sticker")
                           stickerElements.removeAll { $0.id == sticker.id }
-                        },
-                        onDragStart: {
-                          isDraggingSticker = true
-                          draggedStickerId = sticker.id
-                        },
-                        onDragEnd: {
-                          // Check if sticker is near trash can (right side of screen)
-                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
-                            let stickerPosition = stickerElements[index].position
-                            let screenWidth = UIScreen.main.bounds.width
-                            
-                            // If sticker is dragged to the right side (trash area), delete it
-                            if stickerPosition.x > screenWidth * 0.7 {
-                              stickerElements.removeAll { $0.id == sticker.id }
-                            }
-                          }
-                          
-                          isDraggingSticker = false
-                          draggedStickerId = nil
                         }
                       )
-                    }
-                    
-                    // Trash can for drag-to-delete
-                    if isDraggingSticker {
-                      VStack {
-                        Spacer()
-                        HStack {
-                          Spacer()
-                          Image(systemName: "trash.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(.red)
-                            .background(
-                              Circle()
-                                .fill(Color.white)
-                                .frame(width: 60, height: 60)
-                                .shadow(radius: 8)
-                            )
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 100)
-                        }
-                      }
                     }
 
                     // Canvas para dibujar cuando está en modo dibujo
@@ -268,7 +225,7 @@ struct PhotoEditorView: View {
 
                     // Location overlay
                     if let location = locationOverlay {
-                      VStack {
+                        VStack {
                         Spacer()
                         HStack {
                           Spacer()
@@ -286,21 +243,21 @@ struct PhotoEditorView: View {
                 )
             } else {
               emptyStateView
-            }
-          }
-          .frame(maxHeight: .infinity)
-
+                    }
+                }
+                .frame(maxHeight: .infinity)
+                
           // Barra de herramientas (solo cuando hay imagen)
           if selectedImage != nil {
-            VStack(spacing: 16) {
-              HStack(spacing: 20) {
+                VStack(spacing: 16) {
+                    HStack(spacing: 20) {
                 Button(action: { showingFontMenu = true }) {
-                  VStack {
+                            VStack {
                     Image(systemName: "text.badge.plus")
-                      .font(.title2)
+                                    .font(.title2)
                     Text("Texto")
-                      .font(.caption)
-                  }
+                                    .font(.caption)
+                            }
                   .foregroundColor(.white)
                 }
 
@@ -319,52 +276,52 @@ struct PhotoEditorView: View {
                 }
 
                 Button(action: { showingFilterPicker.toggle() }) {
-                  VStack {
-                    Image(systemName: "slider.horizontal.3")
-                      .font(.title2)
-                    Text("Filtros")
-                      .font(.caption)
-                  }
+                            VStack {
+                                Image(systemName: "slider.horizontal.3")
+                                    .font(.title2)
+                                Text("Filtros")
+                                    .font(.caption)
+                            }
                   .foregroundColor(.white)
-                }
-
+                        }
+                        
                 Button(action: { showingTemplatePicker.toggle() }) {
-                  VStack {
+                            VStack {
                     Image(systemName: "square.grid.2x2")
-                      .font(.title2)
+                                    .font(.title2)
                     Text("Plantillas")
-                      .font(.caption)
-                  }
+                                    .font(.caption)
+                            }
                   .foregroundColor(.white)
-                }
-
+                        }
+                        
                 Button(action: { 
                   showingStickerPicker = true
                 }) {
-                  VStack {
+                            VStack {
                     Image(systemName: "face.smiling")
-                      .font(.title2)
+                                    .font(.title2)
                     Text("Stickers")
-                      .font(.caption)
-                  }
+                                    .font(.caption)
+                            }
                   .foregroundColor(.white)
-                }
-              }
-
-              if showingFilterPicker {
-                ScrollView(.horizontal, showsIndicators: false) {
-                  HStack(spacing: 6) {
-                    ForEach(PhotoFilter.allCases, id: \.self) { filter in
-                      FilterPreviewView(
-                        filter: filter,
-                        isSelected: currentFilter == filter,
-                        onTap: { currentFilter = filter }
-                      )
+                        }
                     }
-                  }
-                  .padding(.horizontal)
-                }
-              }
+                    
+                    if showingFilterPicker {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                  HStack(spacing: 6) {
+                                ForEach(PhotoFilter.allCases, id: \.self) { filter in
+                                    FilterPreviewView(
+                                        filter: filter,
+                                        isSelected: currentFilter == filter,
+                                        onTap: { currentFilter = filter }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
 
               if showingTemplatePicker {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -455,9 +412,9 @@ struct PhotoEditorView: View {
           }
         }
       }
-      .sheet(isPresented: $showingImagePicker) {
-        ImagePicker(selectedImage: $selectedImage)
-      }
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(selectedImage: $selectedImage)
+            }
       .sheet(isPresented: $showingFontMenu) {
         FontMenuView { fontStyle in
           currentFontStyle = fontStyle
@@ -555,8 +512,8 @@ struct PhotoEditorView: View {
                   path: currentDrawnPath,
                   fontSize: optimalFontSize,
                   fontWeight: .semibold,
-                  color: .white
-                )
+            color: .white
+        )
                 curvedTextElements.append(newCurvedText)
               }
             }
@@ -755,7 +712,7 @@ struct PhotoEditorView: View {
     }
 
     let renderer = UIGraphicsImageRenderer(size: targetSize)
-    return renderer.image { context in
+        return renderer.image { context in
       // Dibujar la imagen base redimensionada
       image.draw(in: CGRect(origin: .zero, size: targetSize))
 
@@ -771,7 +728,7 @@ struct PhotoEditorView: View {
       let scale = min(scaleX, scaleY)  // Usar el menor para mantener todo visible
 
       // Dibujar textos rectos
-      for textElement in textElements {
+            for textElement in textElements {
         // Aplicar escala al tamaño de fuente
         let scaledFontSize = textElement.fontSize * textElement.scale * scale
 
@@ -884,7 +841,62 @@ struct PhotoEditorView: View {
       if let location = locationOverlay {
         drawLocationOverlay(location, in: context.cgContext, imageSize: targetSize, scale: scale)
       }
+
+      // Dibujar stickers
+      for sticker in stickerElements {
+        drawSticker(sticker, in: context.cgContext, scale: scale)
+      }
     }
+  }
+
+  func drawSticker(_ sticker: StickerElement, in context: CGContext, scale: CGFloat) {
+    // Calcular la posición escalada del sticker
+    let scaledPosition = CGPoint(
+      x: sticker.position.x * scale,
+      y: sticker.position.y * scale
+    )
+    
+    // Calcular el tamaño escalado del sticker
+    let stickerSize = CGSize(width: 80 * sticker.scale * scale, height: 80 * sticker.scale * scale)
+    
+    // Crear el rectángulo donde se dibujará el sticker
+    let stickerRect = CGRect(
+      x: scaledPosition.x - stickerSize.width / 2,
+      y: scaledPosition.y - stickerSize.height / 2,
+      width: stickerSize.width,
+      height: stickerSize.height
+    )
+    
+    // Guardar el estado del contexto
+    context.saveGState()
+    
+    // Aplicar rotación
+    context.translateBy(x: scaledPosition.x, y: scaledPosition.y)
+    context.rotate(by: CGFloat(sticker.rotation) * .pi / 180)
+    context.translateBy(x: -scaledPosition.x, y: -scaledPosition.y)
+    
+    // Cargar la imagen del sticker
+    var stickerImage: UIImage?
+    
+    if let imageURL = sticker.imageURL, !imageURL.isEmpty {
+      // Cargar desde URL (esto es síncrono, puede causar problemas en producción)
+      if let url = URL(string: imageURL),
+         let data = try? Data(contentsOf: url),
+         let image = UIImage(data: data) {
+        stickerImage = image
+      }
+    } else {
+      // Usar imagen local
+      stickerImage = UIImage(named: sticker.imageName)
+    }
+    
+    // Dibujar el sticker si se pudo cargar
+    if let image = stickerImage {
+      image.draw(in: stickerRect)
+    }
+    
+    // Restaurar el estado del contexto
+    context.restoreGState()
   }
 
   func optimizeImageForSharing(_ image: UIImage) -> UIImage {
@@ -945,7 +957,7 @@ struct PhotoEditorView: View {
       let distance = spacing * CGFloat(index) + (spacing / 2)
 
       if let positionInfo = PathUtilities.pointAtDistance(scaledPath, distance: distance) {
-        let attributes: [NSAttributedString.Key: Any] = [
+                let attributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(curvedText.color),
         ]
@@ -1404,8 +1416,6 @@ struct StickerElementView: View {
   let onScale: (CGFloat) -> Void
   let onRotation: (Double) -> Void
   let onDelete: () -> Void
-  let onDragStart: () -> Void
-  let onDragEnd: () -> Void
   
   // Professional transform state management
   @State private var dragOffset: CGSize = .zero
@@ -1426,120 +1436,115 @@ struct StickerElementView: View {
   @State private var isRotating: Bool = false
     
     var body: some View {
-      Group {
-        if let imageURL = stickerElement.imageURL, !imageURL.isEmpty {
-          // Cargar imagen desde URL
-          AsyncImage(url: URL(string: imageURL)) { image in
-            image
+      ZStack {
+        Group {
+          if let imageURL = stickerElement.imageURL, !imageURL.isEmpty {
+            // Cargar imagen desde URL
+            AsyncImage(url: URL(string: imageURL)) { image in
+              image
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+            } placeholder: {
+              // Placeholder mientras carga
+              RoundedRectangle(cornerRadius: 8)
+                .fill(Color.gray.opacity(0.3))
+                .overlay(
+                  ProgressView()
+                    .scaleEffect(0.8)
+                )
+            }
+          } else {
+            // Usar imagen local
+            Image(stickerElement.imageName)
               .resizable()
               .aspectRatio(contentMode: .fit)
-          } placeholder: {
-            // Placeholder mientras carga
-            RoundedRectangle(cornerRadius: 8)
-              .fill(Color.gray.opacity(0.3))
-              .overlay(
-                ProgressView()
-                  .scaleEffect(0.8)
-              )
           }
-        } else {
-          // Usar imagen local
-          Image(stickerElement.imageName)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
         }
-      }
-      .frame(width: 80, height: 80)
-      .contentShape(Rectangle())
-      .scaleEffect(stickerElement.scale * scaleOffset)
-      .rotationEffect(.degrees(stickerElement.rotation + rotationOffset))
-      .position(
-        x: stickerElement.position.x + dragOffset.width,
-        y: stickerElement.position.y + dragOffset.height
-      )
-      .gesture(
-        // Professional gesture system - Industry Standard Approach
-        DragGesture(minimumDistance: 10) // Increased minimum distance to avoid accidental activation
-          .onChanged { value in
-            if dragOffset == .zero {
-              dragStartTime = Date()
-              isActuallyDragging = true
+        .frame(width: 80, height: 80)
+        .padding(20) // Área táctil invisible más grande
+        .contentShape(Rectangle())
+        .scaleEffect(stickerElement.scale * scaleOffset)
+        .rotationEffect(.degrees(stickerElement.rotation + rotationOffset))
+        .position(
+          x: stickerElement.position.x + dragOffset.width,
+          y: stickerElement.position.y + dragOffset.height
+        )
+        .highPriorityGesture(
+          TapGesture(count: 2)
+            .onEnded { _ in
+              // Double tap to delete
+              print("🔥 Double tap detected - deleting sticker")
+              onDelete()
             }
-            
-            // Only activate trash can if we're actually dragging (not scaling)
-            if isActuallyDragging && !isScaling && !isRotating {
-              let dragDuration = Date().timeIntervalSince(dragStartTime)
-              let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+        )
+        .gesture(
+          // Professional gesture system - Industry Standard Approach
+          DragGesture(minimumDistance: 0)
+            .onChanged { value in
+              dragOffset = value.translation
+            }
+            .onEnded { _ in
+              onDrag(dragOffset)
+              dragOffset = .zero
+            }
+        )
+        .simultaneousGesture(
+          MagnificationGesture()
+            .onChanged { value in
+              isScaling = true
+              // More robust scaling calculation with strict limits
+              if lastScaleValue == 1.0 {
+                lastScaleValue = value
+              }
+              let delta = value / lastScaleValue
+              lastScaleValue = value
               
-              // Only show trash can if dragging for more than 0.2 seconds or moved more than 20 points
-              if dragDuration > 0.2 || dragDistance > 20 {
-                onDragStart()
+              // Calculate new scale with limits
+              let currentScale = stickerElement.scale * scaleOffset
+              let newScale = currentScale * delta
+              
+              // Apply strict limits: 0.8x to 2.5x (20% smaller max)
+              if newScale >= 0.8 && newScale <= 2.5 {
+                scaleOffset *= delta
+                onScale(delta)
               }
             }
-            
-            dragOffset = value.translation
-          }
-          .onEnded { _ in
-            if isActuallyDragging {
-              onDrag(dragOffset)
-              onDragEnd()
+            .onEnded { _ in
+              isScaling = false
+              // Don't reset - keep the final state
+              lastScaleValue = 1.0
+              // scaleOffset stays at final value
             }
-            dragOffset = .zero
-            isActuallyDragging = false
-          }
-      )
-      .simultaneousGesture(
-        MagnificationGesture()
-          .onChanged { value in
-            isScaling = true
-            // More robust scaling calculation
-            if lastScaleValue == 1.0 {
-              lastScaleValue = value
-            }
-            let delta = value / lastScaleValue
-            lastScaleValue = value
-            scaleOffset *= delta
-            
-            // Apply scale change
-            onScale(delta)
-          }
-          .onEnded { _ in
-            isScaling = false
-            // Don't reset - keep the final state
-            lastScaleValue = 1.0
-            // scaleOffset stays at final value
-          }
-      )
-      .simultaneousGesture(
-        RotationGesture()
-          .onChanged { value in
-            isRotating = true
-            // More robust rotation calculation
-            if lastRotationValue == 0.0 {
+        )
+        .simultaneousGesture(
+          RotationGesture()
+            .onChanged { value in
+              isRotating = true
+              // More robust rotation calculation
+              if lastRotationValue == 0.0 {
+                lastRotationValue = value.degrees
+              }
+              let delta = value.degrees - lastRotationValue
               lastRotationValue = value.degrees
+              
+              // Only apply rotation if delta is significant
+              if abs(delta) > 0.5 {
+                rotationOffset += delta
+                onRotation(delta)
+              }
             }
-            let delta = value.degrees - lastRotationValue
-            lastRotationValue = value.degrees
-            rotationOffset += delta
-            
-            // Apply rotation change
-            onRotation(delta)
-          }
-          .onEnded { _ in
-            isRotating = false
-            // Don't reset - keep the final state
-            lastRotationValue = 0.0
-            // rotationOffset stays at final value
-          }
-      )
-      .onTapGesture(count: 2) {
-        // Double tap to delete
-        onDelete()
-      }
+            .onEnded { _ in
+              isRotating = false
+              // Don't reset - keep the final state
+              lastRotationValue = 0.0
+              // rotationOffset stays at final value
+            }
+        )
+            }
+        }
     }
-  }
 }
 
 #Preview {
-  PhotoEditorView()
+    PhotoEditorView()
 }

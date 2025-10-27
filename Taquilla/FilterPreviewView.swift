@@ -42,6 +42,7 @@ struct FilterPreviewView: View {
     case .gritty: return "cube"
     case .kodak: return "cube"
     case .lut2: return "cube"
+    case .procedural80s: return "tv"
     }
   }
 }

@@ -173,6 +173,7 @@ enum PhotoFilter: CaseIterable {
   case gritty  // LUT Canon Gritty
   case kodak
   case lut2  // LUT personalizado 2
+  case procedural80s  // Filtro procedural de los 80s
 
   var name: String {
     switch self {
@@ -182,6 +183,7 @@ enum PhotoFilter: CaseIterable {
     case .gritty: return "Gritty"
     case .kodak: return "Kodak"
     case .lut2: return "LUT2"
+    case .procedural80s: return "80s"
     }
   }
 
@@ -193,6 +195,7 @@ enum PhotoFilter: CaseIterable {
     case .gritty: return .green.opacity(0.3)
     case .kodak: return .yellow.opacity(0.3)
     case .lut2: return .purple.opacity(0.3)
+    case .procedural80s: return .pink.opacity(0.3)
     }
   }
 
@@ -207,6 +210,9 @@ enum PhotoFilter: CaseIterable {
       return LUTFilter.applyLUT(to: image, lutFileName: "kodak") ?? image
     case .lut2:
       return LUTFilter.applyLUT(to: image, lutFileName: "lut2") ?? image
+    case .procedural80s:
+      print("🎬 PhotoFilter: Aplicando filtro procedural80s")
+      return Procedural80sFilter().apply(to: image) ?? image
     default:
       break
     }
@@ -237,7 +243,7 @@ enum PhotoFilter: CaseIterable {
           outputImage = output
         }
       }
-    case .gritty, .kodak, .lut2:
+    case .gritty, .kodak, .lut2, .procedural80s:
       // Ya manejados arriba
       break
     }
@@ -448,5 +454,90 @@ class LUTFilter {
 
     let data = Data(bytes: lutData, count: lutData.count * MemoryLayout<Float>.size)
     return (data, dimension)
+  }
+}
+
+// MARK: - Procedural 80s Filter
+class Procedural80sFilter {
+  private let context = CIContext()
+
+  func apply(to image: UIImage) -> UIImage? {
+    print("🎬 Procedural80sFilter: Iniciando aplicación del filtro")
+    guard let input = CIImage(image: image) else { 
+      print("❌ Procedural80sFilter: No se pudo crear CIImage")
+      return nil 
+    }
+    print("✅ Procedural80sFilter: CIImage creado exitosamente")
+
+    // Preservar la orientación original de la imagen
+    let originalOrientation = image.imageOrientation
+    print("📐 Procedural80sFilter: Orientación original: \(originalOrientation.rawValue)")
+
+    // 🎯 Parámetros fijos para efecto consistente de los 80s
+    let bloomRadius: CGFloat = 5.0        // Glow suave y consistente
+    let bloomIntensity: CGFloat = 0.5      // Intensidad moderada
+    let saturation: CGFloat = 1.6          // Colores vibrantes pero naturales
+    let contrast: CGFloat = 1.3            // Contraste mejorado
+    let hueShift: CGFloat = 0.3            // Tono magenta sutil
+
+    print("🎯 Procedural80sFilter: Parámetros fijos aplicados")
+    print("   - Bloom Radius: \(bloomRadius)")
+    print("   - Bloom Intensity: \(bloomIntensity)")
+    print("   - Saturation: \(saturation)")
+    print("   - Contrast: \(contrast)")
+    print("   - Hue Shift: \(hueShift)")
+
+    var outputImage = input
+
+    // 🌟 1) Bloom neon
+    if let bloom = CIFilter(name: "CIBloom") {
+      bloom.setValue(outputImage, forKey: kCIInputImageKey)
+      bloom.setValue(bloomRadius, forKey: kCIInputRadiusKey)
+      bloom.setValue(bloomIntensity, forKey: kCIInputIntensityKey)
+      if let bloomOutput = bloom.outputImage {
+        outputImage = bloomOutput
+        print("✅ Procedural80sFilter: Bloom aplicado")
+      }
+    } else {
+      print("❌ Procedural80sFilter: CIFilter CIBloom no disponible")
+    }
+
+    // 🌈 2) Saturación y contraste vitaminados
+    if let color = CIFilter(name: "CIColorControls") {
+      color.setValue(outputImage, forKey: kCIInputImageKey)
+      color.setValue(saturation, forKey: kCIInputSaturationKey)
+      color.setValue(contrast, forKey: kCIInputContrastKey)
+      if let colorOutput = color.outputImage {
+        outputImage = colorOutput
+        print("✅ Procedural80sFilter: Color controls aplicado")
+      }
+    } else {
+      print("❌ Procedural80sFilter: CIFilter CIColorControls no disponible")
+    }
+
+    // 🎨 3) Tono magenta/cyan procedural
+    if let hue = CIFilter(name: "CIHueAdjust") {
+      hue.setValue(outputImage, forKey: kCIInputImageKey)
+      hue.setValue(hueShift, forKey: kCIInputAngleKey)
+      if let hueOutput = hue.outputImage {
+        outputImage = hueOutput
+        print("✅ Procedural80sFilter: Hue adjust aplicado")
+      }
+    } else {
+      print("❌ Procedural80sFilter: CIFilter CIHueAdjust no disponible")
+    }
+
+    // Viñeta removida para efecto más sutil
+
+    guard let cgImg = context.createCGImage(outputImage, from: outputImage.extent) else { 
+      print("❌ Procedural80sFilter: No se pudo crear CGImage")
+      return nil 
+    }
+    print("✅ Procedural80sFilter: CGImage creado exitosamente")
+
+    // Crear UIImage preservando la orientación original
+    let resultImage = UIImage(cgImage: cgImg, scale: image.scale, orientation: originalOrientation)
+    print("🎉 Procedural80sFilter: Filtro aplicado exitosamente con orientación preservada")
+    return resultImage
   }
 }

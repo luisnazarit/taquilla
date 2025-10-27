@@ -1361,16 +1361,15 @@ struct StickerElementView: View {
   let onRotation: (Double) -> Void
   let onDelete: () -> Void
   
+  // Professional transform state management
   @State private var dragOffset: CGSize = .zero
-  @State private var lastScale: CGFloat = 1.0
-  @State private var lastRotation: Angle = .zero
+  @State private var scaleOffset: CGFloat = 1.0
+  @State private var rotationOffset: Double = 0.0
   
-  // Professional gesture state management
-  @State private var isDragging: Bool = false
-  @State private var isScaling: Bool = false
-  @State private var isRotating: Bool = false
-  @State private var gestureStartScale: CGFloat = 1.0
-  @State private var gestureStartRotation: Double = 0.0
+  // Gesture tracking
+  @State private var lastDragValue: CGSize = .zero
+  @State private var lastScaleValue: CGFloat = 1.0
+  @State private var lastRotationValue: Double = 0.0
     
     var body: some View {
       Group {
@@ -1396,66 +1395,63 @@ struct StickerElementView: View {
             .aspectRatio(contentMode: .fit)
         }
       }
-      .frame(width: 80 * stickerElement.scale, height: 80 * stickerElement.scale)
+      .frame(width: 80, height: 80)
       .contentShape(Rectangle())
+      .scaleEffect(stickerElement.scale * scaleOffset)
+      .rotationEffect(.degrees(stickerElement.rotation + rotationOffset))
       .position(
         x: stickerElement.position.x + dragOffset.width,
         y: stickerElement.position.y + dragOffset.height
       )
-      .rotationEffect(.degrees(stickerElement.rotation))
-      .scaleEffect(stickerElement.scale)
       .gesture(
-        // Professional gesture handling with priority management
+        // Professional gesture system - Industry Standard Approach
         DragGesture(minimumDistance: 0)
           .onChanged { value in
-            // Only allow drag if not scaling or rotating
-            if !isScaling && !isRotating {
-              isDragging = true
-              dragOffset = value.translation
-            }
+            dragOffset = value.translation
           }
           .onEnded { _ in
-            if isDragging {
-              onDrag(dragOffset)
-              dragOffset = .zero
-              isDragging = false
-            }
+            onDrag(dragOffset)
+            dragOffset = .zero
           }
       )
       .simultaneousGesture(
-        // Magnification gesture with proper state management
         MagnificationGesture()
           .onChanged { value in
-            if !isDragging && !isRotating {
-              isScaling = true
-              let delta = value / lastScale
-              lastScale = value
-              onScale(delta)
+            // More robust scaling calculation
+            if lastScaleValue == 1.0 {
+              lastScaleValue = value
             }
+            let delta = value / lastScaleValue
+            lastScaleValue = value
+            scaleOffset *= delta
+            
+            // Apply scale change
+            onScale(delta)
           }
           .onEnded { _ in
-            if isScaling {
-              lastScale = 1.0
-              isScaling = false
-            }
+            // Don't reset - keep the final state
+            lastScaleValue = 1.0
+            // scaleOffset stays at final value
           }
       )
       .simultaneousGesture(
-        // Rotation gesture with proper state management
         RotationGesture()
           .onChanged { value in
-            if !isDragging && !isScaling {
-              isRotating = true
-              let delta = value - lastRotation
-              lastRotation = value
-              onRotation(delta.degrees)
+            // More robust rotation calculation
+            if lastRotationValue == 0.0 {
+              lastRotationValue = value.degrees
             }
+            let delta = value.degrees - lastRotationValue
+            lastRotationValue = value.degrees
+            rotationOffset += delta
+            
+            // Apply rotation change
+            onRotation(delta)
           }
           .onEnded { _ in
-            if isRotating {
-              lastRotation = .zero
-              isRotating = false
-            }
+            // Don't reset - keep the final state
+            lastRotationValue = 0.0
+            // rotationOffset stays at final value
           }
       )
       .onTapGesture(count: 2) {

@@ -48,6 +48,10 @@ struct PhotoEditorView: View {
   @State private var availableStickers: [StickerInfo] = []
   @State private var nextZIndex = 0
   @State private var isLoadingStickers = false
+  
+  // Drag-to-trash states
+  @State private var isDraggingSticker = false
+  @State private var draggedStickerId: UUID? = nil
 
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -186,8 +190,48 @@ struct PhotoEditorView: View {
                         },
                         onDelete: {
                           stickerElements.removeAll { $0.id == sticker.id }
+                        },
+                        onDragStart: {
+                          isDraggingSticker = true
+                          draggedStickerId = sticker.id
+                        },
+                        onDragEnd: {
+                          // Check if sticker is near trash can (right side of screen)
+                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                            let stickerPosition = stickerElements[index].position
+                            let screenWidth = UIScreen.main.bounds.width
+                            
+                            // If sticker is dragged to the right side (trash area), delete it
+                            if stickerPosition.x > screenWidth * 0.7 {
+                              stickerElements.removeAll { $0.id == sticker.id }
+                            }
+                          }
+                          
+                          isDraggingSticker = false
+                          draggedStickerId = nil
                         }
                       )
+                    }
+                    
+                    // Trash can for drag-to-delete
+                    if isDraggingSticker {
+                      VStack {
+                        Spacer()
+                        HStack {
+                          Spacer()
+                          Image(systemName: "trash.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.red)
+                            .background(
+                              Circle()
+                                .fill(Color.white)
+                                .frame(width: 60, height: 60)
+                                .shadow(radius: 8)
+                            )
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 100)
+                        }
+                      }
                     }
 
                     // Canvas para dibujar cuando está en modo dibujo
@@ -1360,6 +1404,8 @@ struct StickerElementView: View {
   let onScale: (CGFloat) -> Void
   let onRotation: (Double) -> Void
   let onDelete: () -> Void
+  let onDragStart: () -> Void
+  let onDragEnd: () -> Void
   
   // Professional transform state management
   @State private var dragOffset: CGSize = .zero
@@ -1370,6 +1416,14 @@ struct StickerElementView: View {
   @State private var lastDragValue: CGSize = .zero
   @State private var lastScaleValue: CGFloat = 1.0
   @State private var lastRotationValue: Double = 0.0
+  
+  // Drag detection
+  @State private var isActuallyDragging: Bool = false
+  @State private var dragStartTime: Date = Date()
+  
+  // Gesture state tracking
+  @State private var isScaling: Bool = false
+  @State private var isRotating: Bool = false
     
     var body: some View {
       Group {
@@ -1405,18 +1459,39 @@ struct StickerElementView: View {
       )
       .gesture(
         // Professional gesture system - Industry Standard Approach
-        DragGesture(minimumDistance: 0)
+        DragGesture(minimumDistance: 10) // Increased minimum distance to avoid accidental activation
           .onChanged { value in
+            if dragOffset == .zero {
+              dragStartTime = Date()
+              isActuallyDragging = true
+            }
+            
+            // Only activate trash can if we're actually dragging (not scaling)
+            if isActuallyDragging && !isScaling && !isRotating {
+              let dragDuration = Date().timeIntervalSince(dragStartTime)
+              let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+              
+              // Only show trash can if dragging for more than 0.2 seconds or moved more than 20 points
+              if dragDuration > 0.2 || dragDistance > 20 {
+                onDragStart()
+              }
+            }
+            
             dragOffset = value.translation
           }
           .onEnded { _ in
-            onDrag(dragOffset)
+            if isActuallyDragging {
+              onDrag(dragOffset)
+              onDragEnd()
+            }
             dragOffset = .zero
+            isActuallyDragging = false
           }
       )
       .simultaneousGesture(
         MagnificationGesture()
           .onChanged { value in
+            isScaling = true
             // More robust scaling calculation
             if lastScaleValue == 1.0 {
               lastScaleValue = value
@@ -1429,6 +1504,7 @@ struct StickerElementView: View {
             onScale(delta)
           }
           .onEnded { _ in
+            isScaling = false
             // Don't reset - keep the final state
             lastScaleValue = 1.0
             // scaleOffset stays at final value
@@ -1437,6 +1513,7 @@ struct StickerElementView: View {
       .simultaneousGesture(
         RotationGesture()
           .onChanged { value in
+            isRotating = true
             // More robust rotation calculation
             if lastRotationValue == 0.0 {
               lastRotationValue = value.degrees
@@ -1449,6 +1526,7 @@ struct StickerElementView: View {
             onRotation(delta)
           }
           .onEnded { _ in
+            isRotating = false
             // Don't reset - keep the final state
             lastRotationValue = 0.0
             // rotationOffset stays at final value
@@ -1458,18 +1536,6 @@ struct StickerElementView: View {
         // Double tap to delete
         onDelete()
       }
-      .overlay(
-        // Delete button
-        Button(action: onDelete) {
-          Image(systemName: "xmark.circle.fill")
-            .font(.title2)
-            .foregroundColor(.red)
-            .background(Color.white)
-            .clipShape(Circle())
-        }
-        .offset(x: 20, y: -20),
-        alignment: .topTrailing
-      )
     }
   }
 }

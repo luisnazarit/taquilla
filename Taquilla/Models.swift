@@ -542,3 +542,76 @@ class Procedural80sFilter {
     return resultImage
   }
 }
+
+// MARK: - Photo Effects
+enum PhotoEffect: String, CaseIterable {
+    case skinSmoothing = "skin_smoothing"
+    
+    var displayName: String {
+        switch self {
+        case .skinSmoothing:
+            return "Maquillaje"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .skinSmoothing:
+            return "face.smiling.fill"
+        }
+    }
+}
+
+// MARK: - Skin Smoothing Effect
+import CoreImage
+
+func smoothSkin(image: UIImage, radius: Float = 8.0) -> UIImage? {
+    guard let ciImage = CIImage(image: image) else {
+        print("❌ smoothSkin: Error creando CIImage")
+        return nil
+    }
+    
+    let context = CIContext()
+    
+    // Usar un filtro de suavizado más simple con Core Image
+    guard let filter = CIFilter(name: "CIGaussianBlur") else {
+        print("❌ smoothSkin: Error creando filtro CIGaussianBlur")
+        return nil
+    }
+    
+    filter.setValue(ciImage, forKey: kCIInputImageKey)
+    filter.setValue(radius, forKey: kCIInputRadiusKey)
+    
+    guard let outputImage = filter.outputImage else {
+        print("❌ smoothSkin: Error obteniendo imagen de salida del filtro")
+        return nil
+    }
+    
+    // Crear una máscara para aplicar el suavizado solo en áreas específicas
+    // Por simplicidad, aplicamos un suavizado suave a toda la imagen
+    let finalRadius = min(max(radius * 0.3, 1.0), 3.0) // Reducir la intensidad
+    
+    guard let finalFilter = CIFilter(name: "CIGaussianBlur") else {
+        print("❌ smoothSkin: Error creando filtro final")
+        return nil
+    }
+    
+    finalFilter.setValue(outputImage, forKey: kCIInputImageKey)
+    finalFilter.setValue(finalRadius, forKey: kCIInputRadiusKey)
+    
+    guard let finalOutput = finalFilter.outputImage else {
+        print("❌ smoothSkin: Error obteniendo imagen final")
+        return nil
+    }
+    
+    // Convertir de vuelta a UIImage
+    let extent = ciImage.extent
+    guard let cgImage = context.createCGImage(finalOutput, from: extent) else {
+        print("❌ smoothSkin: Error creando CGImage")
+        return nil
+    }
+    
+    let resultImage = UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
+    print("✅ smoothSkin: Efecto de suavizado aplicado exitosamente")
+    return resultImage
+}

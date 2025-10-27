@@ -7,7 +7,7 @@ struct PhotoEditorView: View {
   @StateObject private var locationManager = LocationManager()
   @EnvironmentObject var photoManager: PhotoManager
 
-    @State private var selectedImage: UIImage?
+  @State private var selectedImage: UIImage?
 
   // Inicializador para permitir imagen inicial
   init(initialImage: UIImage? = nil) {
@@ -15,12 +15,12 @@ struct PhotoEditorView: View {
       _selectedImage = State(initialValue: image)
     }
   }
-    @State private var showingImagePicker = false
-    @State private var currentFilter: PhotoFilter = .none
-    @State private var textElements: [TextElement] = []
-    @State private var selectedTextElement: TextElement?
-    @State private var showingTextEditor = false
-    @State private var showingFilterPicker = false
+  @State private var showingImagePicker = false
+  @State private var currentFilter: PhotoFilter = .none
+  @State private var textElements: [TextElement] = []
+  @State private var selectedTextElement: TextElement?
+  @State private var showingTextEditor = false
+  @State private var showingFilterPicker = false
   @State private var showingFontMenu = false
   @State private var editingText = ""
   @State private var showingKeyboard = false
@@ -42,13 +42,17 @@ struct PhotoEditorView: View {
   @State private var weatherOverlay: WeatherOverlay?
   @State private var locationOverlay: LocationOverlay?
   @State private var isLoadingTemplate = false
-  
+
   // Sticker states
   @State private var showingStickerPicker = false
   @State private var stickerElements: [StickerElement] = []
   @State private var availableStickers: [StickerInfo] = []
   @State private var nextZIndex = 0
   @State private var isLoadingStickers = false
+  
+  // Effects states
+  @State private var showingEffectsPicker = false
+  @State private var currentEffect: PhotoEffect? = nil
 
   // Para calcular el factor de escala entre pantalla e imagen
   @State private var displayedImageSize: CGSize = .zero
@@ -61,623 +65,689 @@ struct PhotoEditorView: View {
     guard let image = selectedImage else { return nil }
     return currentFilter.apply(to: image)
   }
-    
-    var body: some View {
-        NavigationView {
-            mainContentView
+
+  var body: some View {
+    NavigationView {
+      mainContentView
+    }
+    .sheet(isPresented: $showingImagePicker) {
+      ImagePicker(selectedImage: $selectedImage)
+    }
+    .sheet(isPresented: $showingFontMenu) {
+      FontMenuView { fontStyle in
+        currentFontStyle = fontStyle
+        print("🎨 Fuente seleccionada en el menú: \(fontStyle.customFontName ?? "sistema")")
+        showingFontMenu = false
+        editingText = ""
+
+        // Usar un pequeño delay para asegurar que currentFontStyle se actualice antes de abrir el editor
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          showingTextEditor = true
         }
-        .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(selectedImage: $selectedImage)
+      }
+    }
+    .sheet(isPresented: $showingTextEditor) {
+      textEditorSheet
+    }
+    .sheet(isPresented: $showingCurvedTextEditor) {
+      curvedTextEditorSheet
+    }
+    .sheet(isPresented: $showingStickerPicker) {
+      StickerPickerSheetView(
+        availableStickers: availableStickers,
+        isLoadingStickers: $isLoadingStickers,
+        onStickerSelected: { stickerInfo in
+          let newSticker = StickerElement(
+            imageName: stickerInfo.name,
+            imageURL: stickerInfo.url,
+            position: CGPoint(
+              x: displayedImageSize.width * 0.5, y: displayedImageSize.height * 0.5),
+            scale: 1.0,
+            rotation: 0.0,
+            zIndex: nextZIndex
+          )
+          stickerElements.append(newSticker)
+          nextZIndex += 1
+          showingStickerPicker = false
+        },
+        onLoadStickers: {
+          Task {
+            isLoadingStickers = true
+            availableStickers = await StickerManager.shared.loadAvailableStickers()
+            isLoadingStickers = false
+          }
         }
-        .sheet(isPresented: $showingFontMenu) {
-            FontMenuView { fontStyle in
-                currentFontStyle = fontStyle
-                print("🎨 Fuente seleccionada en el menú: \(fontStyle.customFontName ?? "sistema")")
-                showingFontMenu = false
-                editingText = ""
-                
-                // Usar un pequeño delay para asegurar que currentFontStyle se actualice antes de abrir el editor
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    showingTextEditor = true
-                }
+      )
+    }
+    .overlay(
+      Group {
+        if showingSaveSuccess {
+          VStack {
+            Spacer()
+            HStack {
+              Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+                .font(.title)
+              Text("¡Foto guardada!")
+                .font(.headline)
+                .foregroundColor(.white)
             }
-        }
-        .sheet(isPresented: $showingTextEditor) {
-            textEditorSheet
-        }
-        .sheet(isPresented: $showingCurvedTextEditor) {
-            curvedTextEditorSheet
-        }
-        .sheet(isPresented: $showingStickerPicker) {
-            StickerPickerSheetView(
-                availableStickers: availableStickers,
-                isLoadingStickers: $isLoadingStickers,
-                onStickerSelected: { stickerInfo in
-                    let newSticker = StickerElement(
-                        imageName: stickerInfo.name,
-                        imageURL: stickerInfo.url,
-                        position: CGPoint(x: displayedImageSize.width * 0.5, y: displayedImageSize.height * 0.5),
-                        scale: 1.0,
-                        rotation: 0.0,
-                        zIndex: nextZIndex
-                    )
-                    stickerElements.append(newSticker)
-                    nextZIndex += 1
-                    showingStickerPicker = false
-                },
-                onLoadStickers: {
-                    Task {
-                        isLoadingStickers = true
-                        availableStickers = await StickerManager.shared.loadAvailableStickers()
-                        isLoadingStickers = false
-                    }
-                }
-            )
-        }
-        .overlay(
-            Group {
-                if showingSaveSuccess {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                                .font(.title)
-                            Text("¡Foto guardada!")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                        }
-                        .padding()
-                        .background(Color.black.opacity(0.8))
-                        .cornerRadius(10)
-                        Spacer()
-                    }
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            showingSaveSuccess = false
-                        }
-                    }
-                }
+            .padding()
+            .background(Color.black.opacity(0.8))
+            .cornerRadius(10)
+            Spacer()
+          }
+          .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+              showingSaveSuccess = false
             }
-        )
-    }
-    
-    // MARK: - Sheet Views
-    @ViewBuilder
-    private var textEditorSheet: some View {
-        if let fontStyle = currentFontStyle {
-            TextInputView(
-                text: $editingText,
-                fontStyle: fontStyle,
-                onDone: {
-                    if !editingText.isEmpty {
-                        if let selectedElement = selectedTextElement,
-                            let index = textElements.firstIndex(where: { $0.id == selectedElement.id })
-                        {
-                            textElements[index].text = editingText
-                        } else {
-                            let newElement = TextElement(
-                                text: editingText,
-                                position: CGPoint(x: UIScreen.main.bounds.width / 2, y: 200),
-                                fontSize: fontStyle.size,
-                                fontWeight: fontStyle.weight,
-                                color: fontStyle.color,
-                                customFontName: fontStyle.customFontName,
-                                shadows: fontStyle.shadows.map {
-                                    TextShadow(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
-                                },
-                                backgroundOpacity: fontStyle.backgroundOpacity,
-                                cornerRadius: fontStyle.cornerRadius
-                            )
-                            textElements.append(newElement)
-                        }
-                    }
-                    editingText = ""
-                    selectedTextElement = nil
-                    currentFontStyle = nil
-                    showingTextEditor = false
-                },
-                onCancel: {
-                    editingText = ""
-                    selectedTextElement = nil
-                    currentFontStyle = nil
-                    showingTextEditor = false
-                }
-            )
+          }
         }
-    }
-    
-    @ViewBuilder
-    private var curvedTextEditorSheet: some View {
-        CurvedTextInputView(
-            text: $editingCurvedText,
-            path: currentDrawnPath,
-            onDone: { selectedFontStyle in
-                if !editingCurvedText.isEmpty && !currentDrawnPath.isEmpty {
-                    // Calcular el tamaño de fuente óptimo basado en la longitud de la línea
-                    let pathLength = PathUtilities.pathLength(currentDrawnPath)
-                    let optimalFontSize = calculateOptimalFontSize(
-                        for: editingCurvedText,
-                        pathLength: pathLength
-                    )
+      }
+    )
+  }
 
-                    if let index = selectedCurvedTextIndex {
-                        // Editar texto curvo existente - actualizar todas las propiedades de fuente
-                        curvedTextElements[index].text = editingCurvedText
-                        curvedTextElements[index].fontSize = optimalFontSize
-                        curvedTextElements[index].fontWeight = selectedFontStyle?.weight ?? curvedTextElements[index].fontWeight
-                        curvedTextElements[index].color = selectedFontStyle?.color ?? curvedTextElements[index].color
-                        curvedTextElements[index].customFontName = selectedFontStyle?.customFontName
-                        print("🎨 Editando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
-                    } else {
-                        // Crear nuevo texto curvo con fuente personalizada si está disponible
-                        print("🎨 Creando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
-                        let newCurvedText = CurvedTextElement(
-                            text: editingCurvedText,
-                            path: currentDrawnPath,
-                            fontSize: optimalFontSize,
-                            fontWeight: selectedFontStyle?.weight ?? .semibold,
-                            color: selectedFontStyle?.color ?? .white,
-                            customFontName: selectedFontStyle?.customFontName
-                        )
-                        print("✅ Texto curvo creado con customFontName: \(newCurvedText.customFontName ?? "nil")")
-                        curvedTextElements.append(newCurvedText)
-                    }
-                }
-                editingCurvedText = ""
-                currentDrawnPath = []
-                currentDrawingPath = []
-                drawingMode = .none
-                selectedCurvedTextIndex = nil
-                currentCurvedTextFontStyle = nil
-                showingCurvedTextEditor = false
-            },
-            onCancel: {
-                editingCurvedText = ""
-                currentDrawnPath = []
-                currentDrawingPath = []
-                drawingMode = .none
-                selectedCurvedTextIndex = nil
-                currentCurvedTextFontStyle = nil
-                showingCurvedTextEditor = false
-            },
-            initialFontStyle: currentCurvedTextFontStyle
-        )
-    }
-    
-    private var mainContentView: some View {
-        ZStack {
-            // Fondo de la aplicación
-            Image("Background")
-              .resizable()
-              .aspectRatio(contentMode: .fill)
-              .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-              GeometryReader { geometry in
-                if let image = displayImage {
-                            Image(uiImage: image)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(
-                  GeometryReader { imageGeometry in
-                    Color.clear.onAppear {
-                      displayedImageSize = imageGeometry.size
-                    }
-                    .onChange(of: imageGeometry.size) { oldValue, newValue in
-                      displayedImageSize = newValue
-                    }
-                  }
-                )
-                            .overlay(
-                  ZStack {
-                    // Textos rectos normales
-                                ForEach(textElements) { textElement in
-                      TextElementView(
-                        textElement: textElement,
-                        onDrag: { translation in
-                          if let index = textElements.firstIndex(where: { $0.id == textElement.id })
-                          {
-                            textElements[index].position.x += translation.width
-                            textElements[index].position.y += translation.height
-                          }
-                        },
-                        onScale: { scale in
-                          if let index = textElements.firstIndex(where: { $0.id == textElement.id })
-                          {
-                            let newScale = textElement.scale * scale
-                            textElements[index].scale = min(max(newScale, 0.3), 4.0)
-                          }
-                        },
-                        onTap: {
-                                            selectedTextElement = textElement
-                          editingText = textElement.text
-                          // Restaurar el fontStyle basado en el textElement
-                          currentFontStyle = FontStyle(
-                            name: textElement.customFontName ?? "Default",
-                            size: textElement.fontSize,
-                            weight: textElement.fontWeight,
-                            color: textElement.color,
-                            customFontName: textElement.customFontName,
-                            shadows: textElement.shadows.map {
-                              ShadowStyle(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
-                            },
-                            backgroundOpacity: textElement.backgroundOpacity,
-                            cornerRadius: textElement.cornerRadius
-                          )
-                                            showingTextEditor = true
-                                        }
-                                )
-                    }
-
-                    // Textos curvos
-                    ForEach(curvedTextElements) { curvedText in
-                      CurvedTextView(
-                        curvedText: curvedText,
-                        onDrag: { translation in
-                          if let index = curvedTextElements.firstIndex(where: {
-                            $0.id == curvedText.id
-                          }) {
-                            curvedTextElements[index].offset.width += translation.width
-                            curvedTextElements[index].offset.height += translation.height
-                          }
-                        },
-                        onScale: { scale in
-                          if let index = curvedTextElements.firstIndex(where: {
-                            $0.id == curvedText.id
-                          }) {
-                            let newScale = curvedText.scale * scale
-                            curvedTextElements[index].scale = min(max(newScale, 0.3), 4.0)
-                          }
-                        },
-                        onTap: {
-                          // Editar texto curvo existente
-                          if let index = curvedTextElements.firstIndex(where: {
-                            $0.id == curvedText.id
-                          }) {
-                            editingCurvedText = curvedText.text
-                            currentDrawnPath = curvedText.path
-                            // Crear FontStyle basado en el texto curvo actual
-                            currentCurvedTextFontStyle = FontStyle(
-                              name: curvedText.customFontName ?? "Default",
-                              size: curvedText.fontSize,
-                              weight: curvedText.fontWeight,
-                              color: curvedText.color,
-                              customFontName: curvedText.customFontName,
-                              shadows: [],
-                              backgroundOpacity: 0,
-                              cornerRadius: 0
-                            )
-                            showingCurvedTextEditor = true
-                            // Guardamos el índice para actualizar después
-                            selectedCurvedTextIndex = index
-                          }
-                        }
-                      )
-                    }
-
-                    // Stickers
-                    ForEach(stickerElements.sorted(by: { $0.zIndex < $1.zIndex })) { sticker in
-                      StickerElementView(
-                        stickerElement: sticker,
-                        onDrag: { translation in
-                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
-                            stickerElements[index].position.x += translation.width
-                            stickerElements[index].position.y += translation.height
-                          }
-                        },
-                        onScale: { scale in
-                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
-                            let newScale = sticker.scale * scale
-                            stickerElements[index].scale = min(max(newScale, 0.8), 2.5)
-                          }
-                        },
-                        onRotation: { rotation in
-                          if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
-                            stickerElements[index].rotation += rotation
-                          }
-                        },
-                        onDelete: {
-                          print("🗑️ onDelete called - removing sticker")
-                          stickerElements.removeAll { $0.id == sticker.id }
-                        }
-                      )
-                    }
-
-                    // Canvas para dibujar cuando está en modo dibujo
-                    if isDrawingMode {
-                      DrawingCanvasView(
-                        currentPath: $currentDrawingPath,
-                        drawingMode: $drawingMode,
-                        onFinish: { path in
-                          currentDrawnPath = path
-                          isDrawingMode = false
-                          selectedCurvedTextIndex = nil  // Nuevo texto
-                          showingCurvedTextEditor = true
-                        }
-                      )
-                      .allowsHitTesting(true)  // Solo capturar toques cuando está activo
-                    }
-
-                    // Weather overlay
-                    if let weather = weatherOverlay {
-                      VStack {
-                        Spacer()
-                        HStack {
-                          Spacer()
-                          WeatherOverlayView(
-                            weather: weather,
-                            onRemove: {
-                              weatherOverlay = nil
-                            }
-                          )
-                          .padding(20)
-                        }
-                      }
-                    }
-
-                    // Location overlay
-                    if let location = locationOverlay {
-                        VStack {
-                        Spacer()
-                        HStack {
-                          Spacer()
-                          LocationOverlayView(
-                            location: location,
-                            onRemove: {
-                              locationOverlay = nil
-                            }
-                          )
-                          .padding(20)
-                        }
-                      }
-                    }
-                  }
-                )
-                .clipped()
+  // MARK: - Sheet Views
+  @ViewBuilder
+  private var textEditorSheet: some View {
+    if let fontStyle = currentFontStyle {
+      TextInputView(
+        text: $editingText,
+        fontStyle: fontStyle,
+        onDone: {
+          if !editingText.isEmpty {
+            if let selectedElement = selectedTextElement,
+              let index = textElements.firstIndex(where: { $0.id == selectedElement.id })
+            {
+              textElements[index].text = editingText
             } else {
-              emptyStateView
-                    }
-                }
-                .frame(maxHeight: .infinity)
-                
-          // Barra de herramientas (solo cuando hay imagen)
-          if selectedImage != nil {
-                VStack(spacing: 16) {
-                    HStack(spacing: 20) {
-                Button(action: { 
-                  // Cerrar otros paneles antes de abrir texto
-                  showingFilterPicker = false
-                  showingTemplatePicker = false
-                  showingFontMenu = true 
-                }) {
-                            VStack {
-                    Image(systemName: "text.badge.plus")
-                                    .font(.title2)
-                    Text("Texto")
-                                    .font(.caption)
-                            }
-                  .foregroundColor(showingFontMenu ? .white : .white.opacity(0.6))
-                }
-
-                Button(action: {
-                  // Cerrar otros paneles antes de abrir curvo
-                  showingFilterPicker = false
-                  showingTemplatePicker = false
-                  showingFontMenu = false
-                  isDrawingMode = true
-                  drawingMode = .none
-                  currentDrawingPath = []
-                }) {
-                  VStack {
-                    Image(systemName: "scribble.variable")
-                      .font(.title2)
-                    Text("Curvo")
-                      .font(.caption)
-                  }
-                  .foregroundColor(isDrawingMode ? .white : .white.opacity(0.6))
-                }
-
-                Button(action: { 
-                  // Cerrar otros paneles antes de abrir filtros
-                  showingTemplatePicker = false
-                  showingFontMenu = false
-                  showingFilterPicker.toggle() 
-                }) {
-                            VStack {
-                                Image(systemName: "slider.horizontal.3")
-                                    .font(.title2)
-                                Text("Filtros")
-                                    .font(.caption)
-                            }
-                  .foregroundColor(showingFilterPicker ? .white : .white.opacity(0.6))
-                        }
-                        
-                Button(action: { 
-                  // Cerrar otros paneles antes de abrir plantillas
-                  showingFilterPicker = false
-                  showingFontMenu = false
-                  showingTemplatePicker.toggle() 
-                }) {
-                            VStack {
-                    Image(systemName: "square.grid.2x2")
-                                    .font(.title2)
-                    Text("Plantillas")
-                                    .font(.caption)
-                            }
-                  .foregroundColor(showingTemplatePicker ? .white : .white.opacity(0.6))
-                        }
-                        
-                Button(action: { 
-                  // Cerrar otros paneles antes de abrir stickers
-                  showingFilterPicker = false
-                  showingTemplatePicker = false
-                  showingFontMenu = false
-                  showingStickerPicker = true
-                }) {
-                            VStack {
-                    Image(systemName: "face.smiling")
-                                    .font(.title2)
-                    Text("Stickers")
-                                    .font(.caption)
-                            }
-                  .foregroundColor(showingStickerPicker ? .white : .white.opacity(0.6))
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background(Color.black.opacity(0.3))
-                    .cornerRadius(12)
-                    
-                    if showingFilterPicker {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                  HStack(spacing: 6) {
-                                ForEach(PhotoFilter.allCases, id: \.self) { filter in
-                                    FilterPreviewView(
-                                        filter: filter,
-                                        isSelected: currentFilter == filter,
-                                        onTap: { currentFilter = filter }
-                                    )
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                    }
-
-              if showingTemplatePicker {
-                ScrollView(.horizontal, showsIndicators: false) {
-                  HStack(spacing: 12) {
-                    // Plantilla: Clima y ubicación
-                    Button(action: {
-                      Task {
-                        isLoadingTemplate = true
-                        await loadWeatherData()
-                        isLoadingTemplate = false
-                      }
-                    }) {
-                      VStack(spacing: 4) {
-                        if isLoadingTemplate {
-                          ProgressView()
-                            .scaleEffect(0.8)
-                            .foregroundColor(.white)
-                        } else {
-                          Image(systemName: "cloud.sun.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.white)
-                        }
-                        Text("Clima y\nUbicación")
-                          .font(.caption2)
-                          .multilineTextAlignment(.center)
-                          .foregroundColor(.primary)
-                      }
-                      .frame(width: 80, height: 80)
-                      .background(Color.gray.opacity(0.2))
-                      .cornerRadius(12)
-                    }
-                    .disabled(isLoadingTemplate)
-
-                    // Plantilla: Ubicación
-                    Button(action: {
-                      isLoadingTemplate = true
-                      loadLocationData()
-                    }) {
-                      VStack(spacing: 4) {
-                        if isLoadingTemplate {
-                          ProgressView()
-                            .scaleEffect(0.8)
-                            .foregroundColor(.white)
-                        } else {
-                          Image(systemName: "mappin.and.ellipse")
-                            .font(.system(size: 32))
-                            .foregroundColor(.white)
-                        }
-                        Text("Ubicación")
-                          .font(.caption2)
-                          .multilineTextAlignment(.center)
-                          .foregroundColor(.primary)
-                      }
-                      .frame(width: 80, height: 80)
-                      .background(Color.gray.opacity(0.2))
-                      .cornerRadius(12)
-                    }
-                    .disabled(isLoadingTemplate)
-                  }
-                  .padding(.horizontal)
-                }
-                .padding(.bottom, 20)  // Padding reducido para mejor layout
-              }
+              let newElement = TextElement(
+                text: editingText,
+                position: CGPoint(x: UIScreen.main.bounds.width / 2, y: 200),
+                fontSize: fontStyle.size,
+                fontWeight: fontStyle.weight,
+                color: fontStyle.color,
+                customFontName: fontStyle.customFontName,
+                shadows: fontStyle.shadows.map {
+                  TextShadow(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
+                },
+                backgroundOpacity: fontStyle.backgroundOpacity,
+                cornerRadius: fontStyle.cornerRadius
+              )
+              textElements.append(newElement)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+          }
+          editingText = ""
+          selectedTextElement = nil
+          currentFontStyle = nil
+          showingTextEditor = false
+        },
+        onCancel: {
+          editingText = ""
+          selectedTextElement = nil
+          currentFontStyle = nil
+          showingTextEditor = false
+        }
+      )
+    }
+  }
+
+  @ViewBuilder
+  private var curvedTextEditorSheet: some View {
+    CurvedTextInputView(
+      text: $editingCurvedText,
+      path: currentDrawnPath,
+      onDone: { selectedFontStyle in
+        if !editingCurvedText.isEmpty && !currentDrawnPath.isEmpty {
+          // Calcular el tamaño de fuente óptimo basado en la longitud de la línea
+          let pathLength = PathUtilities.pathLength(currentDrawnPath)
+          let optimalFontSize = calculateOptimalFontSize(
+            for: editingCurvedText,
+            pathLength: pathLength
+          )
+
+          if let index = selectedCurvedTextIndex {
+            // Editar texto curvo existente - actualizar todas las propiedades de fuente
+            curvedTextElements[index].text = editingCurvedText
+            curvedTextElements[index].fontSize = optimalFontSize
+            curvedTextElements[index].fontWeight =
+              selectedFontStyle?.weight ?? curvedTextElements[index].fontWeight
+            curvedTextElements[index].color =
+              selectedFontStyle?.color ?? curvedTextElements[index].color
+            curvedTextElements[index].customFontName = selectedFontStyle?.customFontName
+            print(
+              "🎨 Editando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
+          } else {
+            // Crear nuevo texto curvo con fuente personalizada si está disponible
+            print("🎨 Creando texto curvo con fuente: \(selectedFontStyle?.customFontName ?? "nil")")
+            let newCurvedText = CurvedTextElement(
+              text: editingCurvedText,
+              path: currentDrawnPath,
+              fontSize: optimalFontSize,
+              fontWeight: selectedFontStyle?.weight ?? .semibold,
+              color: selectedFontStyle?.color ?? .white,
+              customFontName: selectedFontStyle?.customFontName
+            )
+            print(
+              "✅ Texto curvo creado con customFontName: \(newCurvedText.customFontName ?? "nil")")
+            curvedTextElements.append(newCurvedText)
           }
         }
-      }
-      .toolbar {
+        editingCurvedText = ""
+        currentDrawnPath = []
+        currentDrawingPath = []
+        drawingMode = .none
+        selectedCurvedTextIndex = nil
+        currentCurvedTextFontStyle = nil
+        showingCurvedTextEditor = false
+      },
+      onCancel: {
+        editingCurvedText = ""
+        currentDrawnPath = []
+        currentDrawingPath = []
+        drawingMode = .none
+        selectedCurvedTextIndex = nil
+        currentCurvedTextFontStyle = nil
+        showingCurvedTextEditor = false
+      },
+      initialFontStyle: currentCurvedTextFontStyle
+    )
+  }
+
+  private var mainContentView: some View {
+    ZStack {
+      // Fondo de la aplicación
+      Image("Background")
+        .resizable()
+        .aspectRatio(contentMode: .fill)
+        .ignoresSafeArea()
+
+      VStack(spacing: 0) {
+        GeometryReader { geometry in
+          if let image = displayImage {
+            Image(uiImage: image)
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+              .background(
+                GeometryReader { imageGeometry in
+                  Color.clear.onAppear {
+                    displayedImageSize = imageGeometry.size
+                  }
+                  .onChange(of: imageGeometry.size) { oldValue, newValue in
+                    displayedImageSize = newValue
+                  }
+                }
+              )
+              .overlay(
+                ZStack {
+                  // Textos rectos normales
+                  ForEach(textElements) { textElement in
+                    TextElementView(
+                      textElement: textElement,
+                      onDrag: { translation in
+                        if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
+                          textElements[index].position.x += translation.width
+                          textElements[index].position.y += translation.height
+                        }
+                      },
+                      onScale: { scale in
+                        if let index = textElements.firstIndex(where: { $0.id == textElement.id }) {
+                          let newScale = textElement.scale * scale
+                          textElements[index].scale = min(max(newScale, 0.3), 4.0)
+                        }
+                      },
+                      onTap: {
+                        selectedTextElement = textElement
+                        editingText = textElement.text
+                        // Restaurar el fontStyle basado en el textElement
+                        currentFontStyle = FontStyle(
+                          name: textElement.customFontName ?? "Default",
+                          size: textElement.fontSize,
+                          weight: textElement.fontWeight,
+                          color: textElement.color,
+                          customFontName: textElement.customFontName,
+                          shadows: textElement.shadows.map {
+                            ShadowStyle(color: $0.color, radius: $0.radius, x: $0.x, y: $0.y)
+                          },
+                          backgroundOpacity: textElement.backgroundOpacity,
+                          cornerRadius: textElement.cornerRadius
+                        )
+                        showingTextEditor = true
+                      }
+                    )
+                  }
+
+                  // Textos curvos
+                  ForEach(curvedTextElements) { curvedText in
+                    CurvedTextView(
+                      curvedText: curvedText,
+                      onDrag: { translation in
+                        if let index = curvedTextElements.firstIndex(where: {
+                          $0.id == curvedText.id
+                        }) {
+                          curvedTextElements[index].offset.width += translation.width
+                          curvedTextElements[index].offset.height += translation.height
+                        }
+                      },
+                      onScale: { scale in
+                        if let index = curvedTextElements.firstIndex(where: {
+                          $0.id == curvedText.id
+                        }) {
+                          let newScale = curvedText.scale * scale
+                          curvedTextElements[index].scale = min(max(newScale, 0.3), 4.0)
+                        }
+                      },
+                      onTap: {
+                        // Editar texto curvo existente
+                        if let index = curvedTextElements.firstIndex(where: {
+                          $0.id == curvedText.id
+                        }) {
+                          editingCurvedText = curvedText.text
+                          currentDrawnPath = curvedText.path
+                          // Crear FontStyle basado en el texto curvo actual
+                          currentCurvedTextFontStyle = FontStyle(
+                            name: curvedText.customFontName ?? "Default",
+                            size: curvedText.fontSize,
+                            weight: curvedText.fontWeight,
+                            color: curvedText.color,
+                            customFontName: curvedText.customFontName,
+                            shadows: [],
+                            backgroundOpacity: 0,
+                            cornerRadius: 0
+                          )
+                          showingCurvedTextEditor = true
+                          // Guardamos el índice para actualizar después
+                          selectedCurvedTextIndex = index
+                        }
+                      }
+                    )
+                  }
+
+                  // Stickers
+                  ForEach(stickerElements.sorted(by: { $0.zIndex < $1.zIndex })) { sticker in
+                    StickerElementView(
+                      stickerElement: sticker,
+                      onDrag: { translation in
+                        if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                          stickerElements[index].position.x += translation.width
+                          stickerElements[index].position.y += translation.height
+                        }
+                      },
+                      onScale: { scale in
+                        if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                          let newScale = sticker.scale * scale
+                          stickerElements[index].scale = min(max(newScale, 0.8), 2.5)
+                        }
+                      },
+                      onRotation: { rotation in
+                        if let index = stickerElements.firstIndex(where: { $0.id == sticker.id }) {
+                          stickerElements[index].rotation += rotation
+                        }
+                      },
+                      onDelete: {
+                        print("🗑️ onDelete called - removing sticker")
+                        stickerElements.removeAll { $0.id == sticker.id }
+                      }
+                    )
+                  }
+
+                  // Canvas para dibujar cuando está en modo dibujo
+                  if isDrawingMode {
+                    DrawingCanvasView(
+                      currentPath: $currentDrawingPath,
+                      drawingMode: $drawingMode,
+                      onFinish: { path in
+                        currentDrawnPath = path
+                        isDrawingMode = false
+                        selectedCurvedTextIndex = nil  // Nuevo texto
+                        showingCurvedTextEditor = true
+                      }
+                    )
+                    .allowsHitTesting(true)  // Solo capturar toques cuando está activo
+                  }
+
+                  // Weather overlay
+                  if let weather = weatherOverlay {
+                    VStack {
+                      Spacer()
+                      HStack {
+                        Spacer()
+                        WeatherOverlayView(
+                          weather: weather,
+                          onRemove: {
+                            weatherOverlay = nil
+                          }
+                        )
+                        .padding(20)
+                      }
+                    }
+                  }
+
+                  // Location overlay
+                  if let location = locationOverlay {
+                    VStack {
+                      Spacer()
+                      HStack {
+                        Spacer()
+                        LocationOverlayView(
+                          location: location,
+                          onRemove: {
+                            locationOverlay = nil
+                          }
+                        )
+                        .padding(20)
+                      }
+                    }
+                  }
+                }
+              )
+              .clipped()
+          } else {
+            emptyStateView
+          }
+        }
+        .frame(maxHeight: .infinity)
+
+        // Barra de herramientas (solo cuando hay imagen)
         if selectedImage != nil {
-          ToolbarItem(placement: .navigationBarTrailing) {
-            HStack(spacing: 20) {
-              // Botón de compartir
-              Button(action: { shareToInstagramStory() }) {
-                Image(systemName: "square.and.arrow.up")
-                  .font(.body)
-                  .foregroundColor(.white)
+          VStack(spacing: 16) {
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 20) {
+              Button(action: {
+                // Cerrar otros paneles antes de abrir texto
+                showingFilterPicker = false
+                showingTemplatePicker = false
+                showingFontMenu = true
+              }) {
+                VStack {
+                  Image(systemName: "text.badge.plus")
+                    .font(.title2)
+                  Text("Texto")
+                    .font(.caption)
+                }
+                .foregroundColor(showingFontMenu ? .white : .white.opacity(0.6))
               }
 
-              // Botón guardar
-              Button(action: { saveImage() }) {
-                Image(systemName: "square.and.arrow.down")
-                  .font(.body)
-                  .foregroundColor(.white)
+              Button(action: {
+                // Cerrar otros paneles antes de abrir curvo
+                showingFilterPicker = false
+                showingTemplatePicker = false
+                showingFontMenu = false
+                isDrawingMode = true
+                drawingMode = .none
+                currentDrawingPath = []
+              }) {
+                VStack {
+                  Image(systemName: "scribble.variable")
+                    .font(.title2)
+                  Text("Curvo")
+                    .font(.caption)
+                }
+                .foregroundColor(isDrawingMode ? .white : .white.opacity(0.6))
               }
+
+              Button(action: {
+                // Cerrar otros paneles antes de abrir filtros
+                showingTemplatePicker = false
+                showingFontMenu = false
+                showingFilterPicker.toggle()
+              }) {
+                VStack {
+                  Image(systemName: "slider.horizontal.3")
+                    .font(.title2)
+                  Text("Filtros")
+                    .font(.caption)
+                }
+                .foregroundColor(showingFilterPicker ? .white : .white.opacity(0.6))
+              }
+
+              Button(action: {
+                // Cerrar otros paneles antes de abrir plantillas
+                showingFilterPicker = false
+                showingFontMenu = false
+                showingTemplatePicker.toggle()
+              }) {
+                VStack {
+                  Image(systemName: "square.grid.2x2")
+                    .font(.title2)
+                  Text("Plantillas")
+                    .font(.caption)
+                }
+                .foregroundColor(showingTemplatePicker ? .white : .white.opacity(0.6))
+              }
+
+              Button(action: {
+                // Cerrar otros paneles antes de abrir stickers
+                showingFilterPicker = false
+                showingTemplatePicker = false
+                showingFontMenu = false
+                showingEffectsPicker = false
+                showingStickerPicker = true
+              }) {
+                VStack {
+                  Image(systemName: "face.smiling")
+                    .font(.title2)
+                  Text("Stickers")
+                    .font(.caption)
+                }
+                .foregroundColor(showingStickerPicker ? .white : .white.opacity(0.6))
+              }
+
+              Button(action: {
+                // Cerrar otros paneles antes de abrir efectos
+                showingFilterPicker = false
+                showingTemplatePicker = false
+                showingFontMenu = false
+                showingStickerPicker = false
+                showingEffectsPicker.toggle()
+              }) {
+                VStack {
+                  Image(systemName: "sparkles")
+                    .font(.title2)
+                  Text("Efectos")
+                    .font(.caption)
+                }
+                .foregroundColor(showingEffectsPicker ? .white : .white.opacity(0.6))
+              }
+              }
+              .padding(.horizontal, 20)
+            }
+            .padding(.vertical, 12)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(12)
+
+            if showingFilterPicker {
+              ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                  ForEach(PhotoFilter.allCases, id: \.self) { filter in
+                    FilterPreviewView(
+                      filter: filter,
+                      isSelected: currentFilter == filter,
+                      onTap: { currentFilter = filter }
+                    )
+                  }
+                }
+                .padding(.horizontal)
+              }
+            }
+
+            if showingTemplatePicker {
+              ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                  // Plantilla: Clima y ubicación
+                  Button(action: {
+                    Task {
+                      isLoadingTemplate = true
+                      await loadWeatherData()
+                      isLoadingTemplate = false
+                    }
+                  }) {
+                    VStack(spacing: 4) {
+                      if isLoadingTemplate {
+                        ProgressView()
+                          .scaleEffect(0.8)
+                          .foregroundColor(.white)
+                      } else {
+                        Image(systemName: "cloud.sun.fill")
+                          .font(.system(size: 32))
+                          .foregroundColor(.white)
+                      }
+                      Text("Clima y\nUbicación")
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
+                    }
+                    .frame(width: 80, height: 80)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
+                  }
+                  .disabled(isLoadingTemplate)
+
+                  // Plantilla: Ubicación
+                  Button(action: {
+                    isLoadingTemplate = true
+                    loadLocationData()
+                  }) {
+                    VStack(spacing: 4) {
+                      if isLoadingTemplate {
+                        ProgressView()
+                          .scaleEffect(0.8)
+                          .foregroundColor(.white)
+                      } else {
+                        Image(systemName: "mappin.and.ellipse")
+                          .font(.system(size: 32))
+                          .foregroundColor(.white)
+                      }
+                      Text("Ubicación")
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.primary)
+                    }
+                    .frame(width: 80, height: 80)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
+                  }
+                  .disabled(isLoadingTemplate)
+                }
+                .padding(.horizontal)
+              }
+              .padding(.bottom, 20)  // Padding reducido para mejor layout
+            }
+
+            if showingEffectsPicker {
+              ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                  ForEach(PhotoEffect.allCases, id: \.self) { effect in
+                    Button(action: {
+                      currentEffect = effect
+                      applyEffect(effect)
+                    }) {
+                      VStack(spacing: 8) {
+                        Image(systemName: effect.iconName)
+                          .font(.title2)
+                          .foregroundColor(currentEffect == effect ? .white : .primary)
+                        
+                        Text(effect.displayName)
+                          .font(.caption2)
+                          .multilineTextAlignment(.center)
+                          .foregroundColor(currentEffect == effect ? .white : .primary)
+                      }
+                      .frame(width: 80, height: 80)
+                      .background(currentEffect == effect ? Color.blue : Color.gray.opacity(0.2))
+                      .cornerRadius(12)
+                    }
+                  }
+                }
+                .padding(.horizontal)
+              }
+              .padding(.bottom, 20)
+            }
+          }
+          .padding(.horizontal, 20)
+          .padding(.vertical, 16)
+        }
+      }
+    }
+    .toolbar {
+      if selectedImage != nil {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          HStack(spacing: 20) {
+            // Botón de compartir
+            Button(action: { shareToInstagramStory() }) {
+              Image(systemName: "square.and.arrow.up")
+                .font(.body)
+                .foregroundColor(.white)
+            }
+
+            // Botón guardar
+            Button(action: { saveImage() }) {
+              Image(systemName: "square.and.arrow.down")
+                .font(.body)
+                .foregroundColor(.white)
             }
           }
         }
       }
     }
-    
-    // Vista de estado vacío (sin imagen)
-    private var emptyStateView: some View {
-        Button(action: { showingImagePicker = true }) {
-            VStack(spacing: 10) {
-                Spacer()
+  }
 
-                Image("Logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 180)
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
+  // Vista de estado vacío (sin imagen)
+  private var emptyStateView: some View {
+    Button(action: { showingImagePicker = true }) {
+      VStack(spacing: 10) {
+        Spacer()
 
-                Image(systemName: "plus.circle")
-                    .font(.system(size: 50))
-                    .foregroundColor(Color(red: 1.0, green: 0.0, blue: 1.0))
+        Image("Logo")
+          .resizable()
+          .scaledToFit()
+          .frame(width: 180)
+          .padding(.horizontal, 40)
+          .padding(.bottom, 40)
 
-                Text("Seleccionar una foto")
-                    .font(.headline)
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.bottom, 5)
+        Image(systemName: "plus.circle")
+          .font(.system(size: 50))
+          .foregroundColor(Color(red: 1.0, green: 0.0, blue: 1.0))
 
-                Text("Elige tu foto más taquillera")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.5))
+        Text("Seleccionar una foto")
+          .font(.headline)
+          .foregroundColor(.white.opacity(0.7))
+          .padding(.bottom, 5)
 
-                Spacer()
+        Text("Elige tu foto más taquillera")
+          .font(.caption)
+          .foregroundColor(.white.opacity(0.5))
 
-                Text(
-                    "Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con <3"
-                )
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.4))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 30)
-                .padding(.bottom, 40)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
+        Spacer()
+
+        Text(
+          "Taquilla es una app que periódicamente actualiza sus diseños,\ntotalmente gratuita, diseñada en Chile con <3"
+        )
+        .font(.caption)
+        .foregroundColor(.white.opacity(0.4))
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 30)
+        .padding(.bottom, 40)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .contentShape(Rectangle())
     }
+    .buttonStyle(PlainButtonStyle())
+  }
+
+  func applyEffect(_ effect: PhotoEffect) {
+    guard let image = selectedImage else { return }
+    
+    switch effect {
+    case .skinSmoothing:
+      if let smoothedImage = smoothSkin(image: image) {
+        selectedImage = smoothedImage
+        print("✅ Efecto de suavizado de piel aplicado")
+      } else {
+        print("❌ Error aplicando efecto de suavizado de piel")
+      }
+    }
+  }
 
   func saveImage() {
     guard let image = displayImage else { return }
@@ -762,7 +832,7 @@ struct PhotoEditorView: View {
     }
 
     let renderer = UIGraphicsImageRenderer(size: targetSize)
-        return renderer.image { context in
+    return renderer.image { context in
       // Dibujar la imagen base redimensionada
       image.draw(in: CGRect(origin: .zero, size: targetSize))
 
@@ -778,7 +848,7 @@ struct PhotoEditorView: View {
       let scale = min(scaleX, scaleY)  // Usar el menor para mantener todo visible
 
       // Dibujar textos rectos
-            for textElement in textElements {
+      for textElement in textElements {
         // Aplicar escala al tamaño de fuente
         let scaledFontSize = textElement.fontSize * textElement.scale * scale
 
@@ -905,10 +975,10 @@ struct PhotoEditorView: View {
       x: sticker.position.x * scale,
       y: sticker.position.y * scale
     )
-    
+
     // Calcular el tamaño escalado del sticker
     let stickerSize = CGSize(width: 80 * sticker.scale * scale, height: 80 * sticker.scale * scale)
-    
+
     // Crear el rectángulo donde se dibujará el sticker
     let stickerRect = CGRect(
       x: scaledPosition.x - stickerSize.width / 2,
@@ -916,35 +986,36 @@ struct PhotoEditorView: View {
       width: stickerSize.width,
       height: stickerSize.height
     )
-    
+
     // Guardar el estado del contexto
     context.saveGState()
-    
+
     // Aplicar rotación
     context.translateBy(x: scaledPosition.x, y: scaledPosition.y)
     context.rotate(by: CGFloat(sticker.rotation) * .pi / 180)
     context.translateBy(x: -scaledPosition.x, y: -scaledPosition.y)
-    
+
     // Cargar la imagen del sticker
     var stickerImage: UIImage?
-    
+
     if let imageURL = sticker.imageURL, !imageURL.isEmpty {
       // Cargar desde URL (esto es síncrono, puede causar problemas en producción)
       if let url = URL(string: imageURL),
-         let data = try? Data(contentsOf: url),
-         let image = UIImage(data: data) {
+        let data = try? Data(contentsOf: url),
+        let image = UIImage(data: data)
+      {
         stickerImage = image
       }
     } else {
       // Usar imagen local
       stickerImage = UIImage(named: sticker.imageName)
     }
-    
+
     // Dibujar el sticker si se pudo cargar
     if let image = stickerImage {
       image.draw(in: stickerRect)
     }
-    
+
     // Restaurar el estado del contexto
     context.restoreGState()
   }
@@ -990,17 +1061,20 @@ struct PhotoEditorView: View {
     let uiFontWeight = convertToUIFontWeight(curvedText.fontWeight)
     // Aplicar la escala al fontSize y al scale del elemento
     let scaledFontSize = curvedText.fontSize * curvedText.scale * scale
-    
+
     // Usar fuente personalizada si está disponible, sino fuente del sistema
     let font: UIFont
     print("🎨 drawCurvedText: customFontName = \(curvedText.customFontName ?? "nil")")
     if let customFontName = curvedText.customFontName,
-       let customFont = UIFont(name: customFontName, size: scaledFontSize) {
+      let customFont = UIFont(name: customFontName, size: scaledFontSize)
+    {
       font = customFont
       print("✅ drawCurvedText: Usando fuente personalizada \(customFontName)")
     } else {
       font = UIFont.systemFont(ofSize: scaledFontSize, weight: uiFontWeight)
-      print("❌ drawCurvedText: Usando fuente del sistema (customFontName: \(curvedText.customFontName ?? "nil"))")
+      print(
+        "❌ drawCurvedText: Usando fuente del sistema (customFontName: \(curvedText.customFontName ?? "nil"))"
+      )
     }
     let characters = Array(curvedText.text)
     let textCount = CGFloat(characters.count)
@@ -1018,7 +1092,7 @@ struct PhotoEditorView: View {
       let distance = spacing * CGFloat(index) + (spacing / 2)
 
       if let positionInfo = PathUtilities.pointAtDistance(scaledPath, distance: distance) {
-                let attributes: [NSAttributedString.Key: Any] = [
+        let attributes: [NSAttributedString.Key: Any] = [
           .font: font,
           .foregroundColor: UIColor(curvedText.color),
         ]
@@ -1357,7 +1431,7 @@ extension PhotoEditorView {
     let onStickerSelected: (StickerInfo) -> Void
     let onLoadStickers: () -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
       NavigationView {
         VStack(spacing: 20) {
@@ -1366,9 +1440,9 @@ extension PhotoEditorView {
             Text("Seleccionar Sticker")
               .font(.title2)
               .fontWeight(.bold)
-            
+
             Spacer()
-            
+
             Button("Cancelar") {
               dismiss()
             }
@@ -1376,54 +1450,57 @@ extension PhotoEditorView {
           }
           .padding(.horizontal)
           .padding(.top)
-          
+
           // Contenido principal
           if isLoadingStickers {
             // Loading state
             VStack(spacing: 20) {
               Spacer()
-              
+
               ProgressView()
                 .scaleEffect(1.5)
                 .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-              
+
               Text("Cargando stickers...")
                 .font(.body)
                 .foregroundColor(.secondary)
-              
+
               Spacer()
             }
           } else if availableStickers.isEmpty {
             // Empty state
             VStack(spacing: 20) {
               Spacer()
-              
+
               Image(systemName: "photo")
                 .font(.system(size: 60))
                 .foregroundColor(.gray)
-              
+
               Text("No hay stickers disponibles")
                 .font(.body)
                 .foregroundColor(.secondary)
-              
+
               Button("Recargar") {
                 onLoadStickers()
               }
               .buttonStyle(.borderedProminent)
-              
+
               Spacer()
             }
           } else {
             // Grid de stickers
             ScrollView {
-              LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16) {
+              LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 4), spacing: 16
+              ) {
                 ForEach(Array(availableStickers.enumerated()), id: \.offset) { index, stickerInfo in
                   Button(action: {
                     onStickerSelected(stickerInfo)
                   }) {
                     VStack(spacing: 8) {
                       // Cargar imagen desde URL
-                      AsyncImage(url: URL(string: stickerInfo.thumbnail ?? stickerInfo.url)) { image in
+                      AsyncImage(url: URL(string: stickerInfo.thumbnail ?? stickerInfo.url)) {
+                        image in
                         image
                           .resizable()
                           .aspectRatio(contentMode: .fit)
@@ -1444,7 +1521,7 @@ extension PhotoEditorView {
                               .scaleEffect(0.8)
                           )
                       }
-                      
+
                       Text(stickerInfo.name)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -1457,7 +1534,7 @@ extension PhotoEditorView {
               .padding(.horizontal)
             }
           }
-          
+
           Spacer()
         }
         .navigationBarHidden(true)
@@ -1470,32 +1547,32 @@ extension PhotoEditorView {
       }
     }
   }
-  
-struct StickerElementView: View {
-  let stickerElement: StickerElement
-  let onDrag: (CGSize) -> Void
-  let onScale: (CGFloat) -> Void
-  let onRotation: (Double) -> Void
-  let onDelete: () -> Void
-  
-  // Professional transform state management
-  @State private var dragOffset: CGSize = .zero
-  @State private var scaleOffset: CGFloat = 1.0
-  @State private var rotationOffset: Double = 0.0
-  
-  // Gesture tracking
-  @State private var lastDragValue: CGSize = .zero
-  @State private var lastScaleValue: CGFloat = 1.0
-  @State private var lastRotationValue: Double = 0.0
-  
-  // Drag detection
-  @State private var isActuallyDragging: Bool = false
-  @State private var dragStartTime: Date = Date()
-  
-  // Gesture state tracking
-  @State private var isScaling: Bool = false
-  @State private var isRotating: Bool = false
-    
+
+  struct StickerElementView: View {
+    let stickerElement: StickerElement
+    let onDrag: (CGSize) -> Void
+    let onScale: (CGFloat) -> Void
+    let onRotation: (Double) -> Void
+    let onDelete: () -> Void
+
+    // Professional transform state management
+    @State private var dragOffset: CGSize = .zero
+    @State private var scaleOffset: CGFloat = 1.0
+    @State private var rotationOffset: Double = 0.0
+
+    // Gesture tracking
+    @State private var lastDragValue: CGSize = .zero
+    @State private var lastScaleValue: CGFloat = 1.0
+    @State private var lastRotationValue: Double = 0.0
+
+    // Drag detection
+    @State private var isActuallyDragging: Bool = false
+    @State private var dragStartTime: Date = Date()
+
+    // Gesture state tracking
+    @State private var isScaling: Bool = false
+    @State private var isRotating: Bool = false
+
     var body: some View {
       ZStack {
         Group {
@@ -1522,7 +1599,7 @@ struct StickerElementView: View {
           }
         }
         .frame(width: 80, height: 80)
-        .padding(20) // Área táctil invisible más grande
+        .padding(20)  // Área táctil invisible más grande
         .contentShape(Rectangle())
         .scaleEffect(stickerElement.scale * scaleOffset)
         .rotationEffect(.degrees(stickerElement.rotation + rotationOffset))
@@ -1559,11 +1636,11 @@ struct StickerElementView: View {
               }
               let delta = value / lastScaleValue
               lastScaleValue = value
-              
+
               // Calculate new scale with limits
               let currentScale = stickerElement.scale * scaleOffset
               let newScale = currentScale * delta
-              
+
               // Apply strict limits: 0.8x to 2.5x (20% smaller max)
               if newScale >= 0.8 && newScale <= 2.5 {
                 scaleOffset *= delta
@@ -1587,7 +1664,7 @@ struct StickerElementView: View {
               }
               let delta = value.degrees - lastRotationValue
               lastRotationValue = value.degrees
-              
+
               // Only apply rotation if delta is significant
               if abs(delta) > 0.5 {
                 rotationOffset += delta
@@ -1601,11 +1678,11 @@ struct StickerElementView: View {
               // rotationOffset stays at final value
             }
         )
-            }
-        }
+      }
     }
+  }
 }
 
 #Preview {
-    PhotoEditorView()
+  PhotoEditorView()
 }

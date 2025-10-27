@@ -63,7 +63,8 @@ struct GalleryView: View {
             ) {
                 ForEach(photoManager.savedPhotos) { photo in
                     GalleryThumbnailView(photo: photo)
-                        .aspectRatio(1, contentMode: .fill)
+                        .frame(width: 120, height: 120)
+                        .clipped()
                         .onTapGesture {
                             selectedPhoto = photo
                         }
@@ -88,9 +89,11 @@ struct GalleryThumbnailView: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
+                    .frame(width: 120, height: 120)
                     .clipped()
             } else {
                 Color.gray.opacity(0.2)
+                    .frame(width: 120, height: 120)
                 ProgressView()
             }
         }
@@ -100,7 +103,7 @@ struct GalleryThumbnailView: View {
     }
 
     private func loadThumbnail() {
-        let size = CGSize(width: 300, height: 300)
+        let size = CGSize(width: 120, height: 120)
         photoManager.loadImage(for: photo, targetSize: size) { loadedImage in
             image = loadedImage
         }

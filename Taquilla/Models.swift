@@ -1,6 +1,7 @@
 import CoreImage
 import SwiftUI
 import UIKit
+import Vision
 
 // MARK: - Text Element Model
 struct TextElement: Identifiable {
@@ -562,10 +563,16 @@ enum PhotoEffect: String, CaseIterable {
     }
 }
 
-// MARK: - Skin Smoothing Effect
+// MARK: - Advanced Skin Smoothing Effect
 import CoreImage
+import Vision
+import UIKit
+import Accelerate
 
 func smoothSkin(image: UIImage, radius: Float = 8.0) -> UIImage? {
+    // Preservar la orientación original
+    let originalOrientation = image.imageOrientation
+    
     guard let ciImage = CIImage(image: image) else {
         print("❌ smoothSkin: Error creando CIImage")
         return nil
@@ -573,45 +580,209 @@ func smoothSkin(image: UIImage, radius: Float = 8.0) -> UIImage? {
     
     let context = CIContext()
     
-    // Usar un filtro de suavizado más simple con Core Image
-    guard let filter = CIFilter(name: "CIGaussianBlur") else {
-        print("❌ smoothSkin: Error creando filtro CIGaussianBlur")
+    // Paso 1: Detectar rostros usando Vision
+    let faceDetectionRequest = VNDetectFaceLandmarksRequest { request, error in
+        if let error = error {
+            print("❌ smoothSkin: Error en detección facial: \(error)")
+        }
+    }
+    
+    let requestHandler = VNImageRequestHandler(ciImage: ciImage, options: [:])
+    
+    do {
+        try requestHandler.perform([faceDetectionRequest])
+    } catch {
+        print("❌ smoothSkin: Error ejecutando detección facial: \(error)")
+        // Fallback: aplicar suavizado avanzado si falla la detección
+        return applyAdvancedSmoothing(to: ciImage, radius: radius, context: context, originalOrientation: originalOrientation)
+    }
+    
+    guard let faceObservations = faceDetectionRequest.results as? [VNFaceObservation],
+          !faceObservations.isEmpty else {
+        print("⚠️ smoothSkin: No se detectaron rostros, aplicando suavizado avanzado")
+        return applyAdvancedSmoothing(to: ciImage, radius: radius, context: context, originalOrientation: originalOrientation)
+    }
+    
+    print("✅ smoothSkin: Detectados \(faceObservations.count) rostro(s)")
+    
+    // Paso 2: Crear máscara de piel avanzada con gradientes suaves
+    guard let skinMask = createAdvancedSkinMask(from: faceObservations, imageSize: ciImage.extent.size) else {
+        print("❌ smoothSkin: Error creando máscara avanzada de piel")
+        return applyAdvancedSmoothing(to: ciImage, radius: radius, context: context, originalOrientation: originalOrientation)
+    }
+    
+    // Paso 3: Aplicar suavizado profesional con múltiples técnicas
+    guard let smoothedImage = applyProfessionalSkinSmoothing(to: ciImage, mask: skinMask, radius: radius, context: context, originalOrientation: originalOrientation) else {
+        print("❌ smoothSkin: Error aplicando suavizado profesional")
+        return applyAdvancedSmoothing(to: ciImage, radius: radius, context: context, originalOrientation: originalOrientation)
+    }
+    
+    print("✅ smoothSkin: Efecto profesional avanzado aplicado exitosamente")
+    return smoothedImage
+}
+
+// Función auxiliar para suavizado avanzado (fallback)
+private func applyAdvancedSmoothing(to ciImage: CIImage, radius: Float, context: CIContext, originalOrientation: UIImage.Orientation) -> UIImage? {
+    // Usar bilateral filtering para mejor calidad
+    guard let bilateralFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+    
+    // Aplicar múltiples pasadas con diferentes radios para mejor resultado
+    let radii: [Float] = [radius * 0.3, radius * 0.6, radius]
+    var currentImage = ciImage
+    
+    for currentRadius in radii {
+        bilateralFilter.setValue(currentImage, forKey: kCIInputImageKey)
+        bilateralFilter.setValue(currentRadius, forKey: kCIInputRadiusKey)
+        
+        guard let outputImage = bilateralFilter.outputImage else { continue }
+        currentImage = outputImage
+    }
+    
+    guard let cgImage = context.createCGImage(currentImage, from: ciImage.extent) else { return nil }
+    return UIImage(cgImage: cgImage, scale: 1.0, orientation: originalOrientation)
+}
+
+// Crear máscara de piel avanzada con gradientes suaves
+private func createAdvancedSkinMask(from faceObservations: [VNFaceObservation], imageSize: CGSize) -> CIImage? {
+    let maskSize = imageSize
+    let colorSpace = CGColorSpaceCreateDeviceGray()
+    
+    guard let context = CGContext(data: nil,
+                                width: Int(maskSize.width),
+                                height: Int(maskSize.height),
+                                bitsPerComponent: 8,
+                                bytesPerRow: Int(maskSize.width),
+                                space: colorSpace,
+                                bitmapInfo: CGImageAlphaInfo.none.rawValue) else {
         return nil
     }
     
-    filter.setValue(ciImage, forKey: kCIInputImageKey)
-    filter.setValue(radius, forKey: kCIInputRadiusKey)
+    // Rellenar con blanco (áreas a suavizar)
+    context.setFillColor(CGColor(gray: 1.0, alpha: 1.0))
+    context.fill(CGRect(origin: .zero, size: maskSize))
     
-    guard let outputImage = filter.outputImage else {
-        print("❌ smoothSkin: Error obteniendo imagen de salida del filtro")
-        return nil
+    // Crear gradientes suaves alrededor de las características faciales
+    context.setFillColor(CGColor(gray: 0.0, alpha: 1.0))
+    
+    for faceObservation in faceObservations {
+        let faceRect = VNImageRectForNormalizedRect(faceObservation.boundingBox, 
+                                                  Int(maskSize.width), 
+                                                  Int(maskSize.height))
+        
+        // Excluir ojos con gradiente suave
+        if let leftEye = faceObservation.landmarks?.leftEye {
+            drawGradientLandmarkRegion(leftEye, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 15)
+        }
+        if let rightEye = faceObservation.landmarks?.rightEye {
+            drawGradientLandmarkRegion(rightEye, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 15)
+        }
+        
+        // Excluir cejas con gradiente suave
+        if let leftEyebrow = faceObservation.landmarks?.leftEyebrow {
+            drawGradientLandmarkRegion(leftEyebrow, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 10)
+        }
+        if let rightEyebrow = faceObservation.landmarks?.rightEyebrow {
+            drawGradientLandmarkRegion(rightEyebrow, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 10)
+        }
+        
+        // Excluir labios con gradiente suave
+        if let outerLips = faceObservation.landmarks?.outerLips {
+            drawGradientLandmarkRegion(outerLips, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 12)
+        }
+        if let innerLips = faceObservation.landmarks?.innerLips {
+            drawGradientLandmarkRegion(innerLips, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 8)
+        }
+        
+        // Excluir nariz con gradiente suave
+        if let nose = faceObservation.landmarks?.nose {
+            drawGradientLandmarkRegion(nose, in: context, imageSize: maskSize, faceRect: faceRect, gradientRadius: 8)
+        }
     }
     
-    // Crear una máscara para aplicar el suavizado solo en áreas específicas
-    // Por simplicidad, aplicamos un suavizado suave a toda la imagen
-    let finalRadius = min(max(radius * 0.3, 1.0), 3.0) // Reducir la intensidad
-    
-    guard let finalFilter = CIFilter(name: "CIGaussianBlur") else {
-        print("❌ smoothSkin: Error creando filtro final")
-        return nil
+    guard let cgImage = context.makeImage() else { return nil }
+    return CIImage(cgImage: cgImage)
+}
+
+// Dibujar región de landmark con gradiente suave
+private func drawGradientLandmarkRegion(_ landmark: VNFaceLandmarkRegion2D, 
+                                     in context: CGContext, 
+                                     imageSize: CGSize, 
+                                     faceRect: CGRect,
+                                     gradientRadius: CGFloat) {
+    let points = landmark.normalizedPoints.map { point in
+        CGPoint(
+            x: faceRect.origin.x + point.x * faceRect.width,
+            y: faceRect.origin.y + point.y * faceRect.height
+        )
     }
     
-    finalFilter.setValue(outputImage, forKey: kCIInputImageKey)
-    finalFilter.setValue(finalRadius, forKey: kCIInputRadiusKey)
+    guard !points.isEmpty else { return }
     
-    guard let finalOutput = finalFilter.outputImage else {
-        print("❌ smoothSkin: Error obteniendo imagen final")
-        return nil
+    // Crear gradiente radial alrededor de cada punto
+    for point in points {
+        let gradientRect = CGRect(
+            x: point.x - gradientRadius,
+            y: point.y - gradientRadius,
+            width: gradientRadius * 2,
+            height: gradientRadius * 2
+        )
+        
+        // Crear gradiente circular
+        let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceGray(),
+                                colors: [CGColor(gray: 0.0, alpha: 1.0), CGColor(gray: 0.0, alpha: 0.0)] as CFArray,
+                                locations: [0.0, 1.0])
+        
+        if let gradient = gradient {
+            context.saveGState()
+            context.addEllipse(in: gradientRect)
+            context.clip()
+            context.drawRadialGradient(gradient,
+                                     startCenter: point,
+                                     startRadius: 0,
+                                     endCenter: point,
+                                     endRadius: gradientRadius,
+                                     options: [])
+            context.restoreGState()
+        }
     }
+}
+
+// Aplicar suavizado profesional usando múltiples técnicas
+private func applyProfessionalSkinSmoothing(to ciImage: CIImage, 
+                                           mask: CIImage, 
+                                           radius: Float, 
+                                           context: CIContext,
+                                           originalOrientation: UIImage.Orientation) -> UIImage? {
     
-    // Convertir de vuelta a UIImage
-    let extent = ciImage.extent
-    guard let cgImage = context.createCGImage(finalOutput, from: extent) else {
-        print("❌ smoothSkin: Error creando CGImage")
-        return nil
-    }
+    // Paso 1: Aplicar bilateral filtering (edge-preserving)
+    guard let bilateralFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+    bilateralFilter.setValue(ciImage, forKey: kCIInputImageKey)
+    bilateralFilter.setValue(radius * 0.7, forKey: kCIInputRadiusKey)
     
-    let resultImage = UIImage(cgImage: cgImage, scale: image.scale, orientation: image.imageOrientation)
-    print("✅ smoothSkin: Efecto de suavizado aplicado exitosamente")
-    return resultImage
+    guard let bilateralImage = bilateralFilter.outputImage else { return nil }
+    
+    // Paso 2: Aplicar suavizado adicional con radio más pequeño
+    guard let detailFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+    detailFilter.setValue(bilateralImage, forKey: kCIInputImageKey)
+    detailFilter.setValue(radius * 0.3, forKey: kCIInputRadiusKey)
+    
+    guard let detailImage = detailFilter.outputImage else { return nil }
+    
+    // Paso 3: Mezclar con máscara suavizada
+    guard let maskBlurFilter = CIFilter(name: "CIGaussianBlur") else { return nil }
+    maskBlurFilter.setValue(mask, forKey: kCIInputImageKey)
+    maskBlurFilter.setValue(5.0, forKey: kCIInputRadiusKey)
+    
+    guard let smoothMask = maskBlurFilter.outputImage else { return nil }
+    
+    // Paso 4: Mezclar imagen original con suavizada usando la máscara suavizada
+    guard let blendFilter = CIFilter(name: "CIBlendWithMask") else { return nil }
+    blendFilter.setValue(ciImage, forKey: kCIInputImageKey)           // Imagen original
+    blendFilter.setValue(detailImage, forKey: kCIInputBackgroundImageKey) // Imagen suavizada
+    blendFilter.setValue(smoothMask, forKey: kCIInputMaskImageKey)     // Máscara suavizada
+    
+    guard let outputImage = blendFilter.outputImage,
+          let cgImage = context.createCGImage(outputImage, from: ciImage.extent) else { return nil }
+    
+    return UIImage(cgImage: cgImage, scale: 1.0, orientation: originalOrientation)
 }
